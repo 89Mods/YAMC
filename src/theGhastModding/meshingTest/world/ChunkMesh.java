@@ -1,23 +1,19 @@
 package theGhastModding.meshingTest.world;
 
+import theGhastModding.meshingTest.resources.BaseModel;
+
 public class ChunkMesh {
 	
-	private int id;
-	private int vertexCount;
+	private BaseModel model;
 	private boolean isEmpty;
 	
-	public ChunkMesh(int id, int vertexCount, boolean isEmpty) {
-		this.id = id;
-		this.vertexCount = vertexCount;
+	public ChunkMesh(BaseModel model, boolean isEmpty) {
+		this.model = model;
 		this.isEmpty = isEmpty;
 	}
 	
-	public int getId() {
-		return this.id;
-	}
-	
-	public int getVertexCount() {
-		return this.vertexCount;
+	public BaseModel getModel() {
+		return this.model;
 	}
 	
 	public boolean isEmpty() {

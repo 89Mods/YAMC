@@ -19,7 +19,6 @@ import org.lwjgl.opengl.GL11;
 import theGhastModding.meshingTest.object.Camera;
 import theGhastModding.meshingTest.renderer.Renderer;
 import theGhastModding.meshingTest.renderer.TextMasterRenderer;
-import theGhastModding.meshingTest.resources.BaseModel;
 import theGhastModding.meshingTest.resources.BasicFonts;
 import theGhastModding.meshingTest.resources.Loader;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
@@ -83,7 +82,7 @@ public class MainGameLoop {
 		text.setColour(1, 1, 1);
 		text.setStyle(GUIText.PLAIN);
 		try {
-			BaseModel worldModel = mesher.mesh(loader, texturemap);
+			mesher.updateMeshes(loader, texturemap);
 			textRenderer.loadText(text);
 			Dimension d = getWindowSize(window);
 			System.out.println(d.toString());
@@ -116,7 +115,7 @@ public class MainGameLoop {
 					}
 					camera.update();
 					GLFW.glfwPollEvents();
-					renderer.render(camera, worldModel, texturemap.getTextureID());
+					renderer.render(camera, mesher, texturemap.getTextureID());
 					textRenderer.render();
 					GLFW.glfwSwapBuffers(window);
 					counter++;

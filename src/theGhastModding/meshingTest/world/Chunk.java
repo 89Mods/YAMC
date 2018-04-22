@@ -23,6 +23,7 @@ public class Chunk {
 	public boolean setBlock(int x, int y, int z, int block) {
 		if(x < 0 || x >= CHUNK_WIDTH || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_DEPTH) return false;
 		blocks[x * (CHUNK_HEIGHT * CHUNK_DEPTH) + y * CHUNK_DEPTH + z] = block;
+		markDirty();
 		return true;
 	}
 	

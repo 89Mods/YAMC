@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.joml.Vector2f;
-
 import theGhastModding.meshingTest.resources.BaseModel;
 import theGhastModding.meshingTest.resources.Loader;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
@@ -16,6 +15,7 @@ public class WorldMesher {
 	
 	public WorldMesher(World world) {
 		this.world = world;
+		this.meshes = new ChunkMesh[world.getChunkWidth() * world.getChunkHeight() * world.getChunkDepth()];
 	}
 	
 	private static final float[] leftFace = {
@@ -220,18 +220,43 @@ public class WorldMesher {
 	private int faceCount;
 	private int blockCount;
 	
-	public BaseModel mesh(Loader loader, BlockTexturemap texturemap) throws Exception {
+	private ChunkMesh[] meshes;
+	
+	public synchronized ChunkMesh[] getMeshes() {
+		return this.meshes;
+	}
+	
+	private int getChunkIndex(int chunkx, int chunky, int chunkz) {
+		if(chunkx < 0 || chunky >= world.getChunkWidth() || chunky < 0 || chunky >= world.getChunkHeight() || chunkz < 0 || chunkz >= world.getChunkDepth()) return -1;
+		return (chunkx * world.getChunkHeight() * world.getChunkDepth()) + chunky * world.getChunkDepth() + chunkz;
+	}
+	
+	public void updateMeshes(Loader loader, BlockTexturemap texturemap) throws Exception {
+		faceCount = 0;
+		blockCount = 0;
 		long startTime = System.currentTimeMillis();
+		for(int i = 0; i < world.getChunkWidth(); i++) {
+			for(int j = 0; j < world.getChunkHeight(); j++) {
+				for(int k = 0; k < world.getChunkDepth(); k++) {
+					int indx = getChunkIndex(i, j, k);
+					if(indx != -1 && (world.getChunk(i, j, k).isDirty() || meshes[indx] == null)) {
+						meshes[indx] = meshChunk(i, j, k, loader, texturemap);
+					}
+				}
+			}
+		}
+		System.out.println(Integer.toString(faceCount) + " faces in mesh (" + Integer.toString(blockCount) + " blocks)" + ", took " + Long.toString(System.currentTimeMillis() - startTime) + " ms");
+	}
+	
+	private ChunkMesh meshChunk(int chunkx, int chunky, int chunkz, Loader loader, BlockTexturemap texturemap) throws Exception {
 		vertices = new ArrayList<Float>();
 		indices = new ArrayList<Integer>();
 		normals = new ArrayList<Float>();
 		textureCoords = new ArrayList<Float>();
-		faceCount = 0;
-		blockCount = 0;
 		int airID = Block.air.getBlockID();
-		for(int x = 0; x < world.getWidth(); x++) {
-			for(int y = 0; y < world.getHeight(); y++) {
-				for(int z = 0; z < world.getDepth(); z++) {
+		for(int x = Chunk.CHUNK_WIDTH * chunkx; x < Chunk.CHUNK_WIDTH * (chunkx + 1); x++) {
+			for(int y = Chunk.CHUNK_HEIGHT * chunky; y < Chunk.CHUNK_HEIGHT * (chunky + 1); y++) {
+				for(int z = Chunk.CHUNK_DEPTH * chunkz; z < Chunk.CHUNK_DEPTH * (chunkz + 1); z++) {
 					int blockid = world.getBlock(x, y, z);
 					if(blockid != airID && Block.getBlockFromID(blockid) != null) {
 						Block block = Block.getBlockFromID(blockid);
@@ -246,6 +271,9 @@ public class WorldMesher {
 					}
 				}
 			}
+		}
+		if(vertices.isEmpty()) {
+			return new ChunkMesh(null, true);
 		}
 		float[] verticesArray = new float[vertices.size()];
 		for(int i = 0; i < vertices.size(); i++) {
@@ -267,8 +295,8 @@ public class WorldMesher {
 			textureCoordsArray[i] = textureCoords.get(i);
 		}
 		textureCoords.clear();
-		System.out.println(Integer.toString(faceCount) + " faces in mesh (" + Integer.toString(blockCount) + " blocks)" + ", took " + Long.toString(System.currentTimeMillis() - startTime) + " ms");
-		return loader.loadToVAO(verticesArray, indicesArray, textureCoordsArray, normalsArray);
+		BaseModel model = loader.loadToVAO(verticesArray, indicesArray, textureCoordsArray, normalsArray);
+		return new ChunkMesh(model, false);
 	}
 	
 	private void tryAddFace(int face, Block block, BlockTexturemap texturemap, int x, int y, int z) {
@@ -304,46 +332,5 @@ public class WorldMesher {
 		}
 		faceCount++;
 	}
-	
-	/*private void tryAddFace(float[] face, int[] faceIndices, float[] faceNormals, float[] faceTextureCoords, Vector2f offsetTextureCoords, int x, int y, int z) {
-		int origSize = vertices.size();
-		for(int i = 0; i < face.length; i++) {
-			int offset = 0;
-			if(i % 3 == 0) {
-				offset = x;
-			}
-			if(i % 3 == 1) {
-				offset = y;
-			}
-			if(i % 3 == 2) {
-				offset = z;
-			}
-			float offsetCoord = face[i] + (float)offset;
-			vertices.add(offsetCoord);
-		}
-		for(int i = 0; i < faceIndices.length; i++) {
-			indices.add(faceIndices[i] + origSize / 3);
-		}
-		for(int i = 0; i < faceNormals.length; i++) {
-			int offset = 0;
-			if(i % 3 == 0) offset = x;
-			if(i % 3 == 1) offset = y;
-			if(i % 3 == 2) offset = z;
-			float offsetCoord = faceNormals[i] + (float)offset;
-			normals.add(offsetCoord);
-		}
-		for(int i = 0; i < faceTextureCoords.length; i++) {
-			float offset = 0;
-			if(i % 2 == 0) {
-				offset = offsetTextureCoords.x;
-			}
-			if(i % 2 == 1) {
-				offset = offsetTextureCoords.y;
-			}
-			float offsetCoord = (faceTextureCoords[i] / 3f) + (float)offset / 3f;
-			textureCoords.add(offsetCoord);
-		}
-		faceCount++;
-	}*/
 	
 }

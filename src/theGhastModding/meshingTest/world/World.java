@@ -48,12 +48,12 @@ public class World {
 		return c.getBlock(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz());
 	}
 	
-	private Chunk getChunk(int chunkx, int chunky, int chunkz) {
+	public Chunk getChunk(int chunkx, int chunky, int chunkz) {
 		if(chunkx < 0 || chunky >= chunkWidth || chunky < 0 || chunky >= chunkHeight || chunkz < 0 || chunkz >= chunkDepth) return null;
 		return chunks[(chunkx * chunkHeight * chunkDepth) + chunky * chunkDepth + chunkz];
 	}
 	
-	private Chunk getChunkAt(int x, int y, int z) {
+	public Chunk getChunkAt(int x, int y, int z) {
 		if(x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= depth) return null;
 		return getChunk(x / Chunk.CHUNK_WIDTH, y / Chunk.CHUNK_HEIGHT, z / Chunk.CHUNK_DEPTH);
 	}
@@ -102,6 +102,18 @@ public class World {
 	
 	public int getDepth() {
 		return depth;
+	}
+	
+	public int getChunkWidth() {
+		return chunkWidth;
+	}
+	
+	public int getChunkHeight() {
+		return chunkHeight;
+	}
+	
+	public int getChunkDepth() {
+		return chunkDepth;
 	}
 	
 }

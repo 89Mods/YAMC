@@ -11,9 +11,10 @@ import org.lwjgl.opengl.GL30;
 
 import theGhastModding.meshingTest.main.MainGameLoop;
 import theGhastModding.meshingTest.object.Camera;
-import theGhastModding.meshingTest.resources.BaseModel;
 import theGhastModding.meshingTest.shaders.BlockShader;
 import theGhastModding.meshingTest.util.Maths;
+import theGhastModding.meshingTest.world.ChunkMesh;
+import theGhastModding.meshingTest.world.WorldMesher;
 
 public class Renderer {
 	
@@ -46,19 +47,22 @@ public class Renderer {
 		GL11.glDisable(GL11.GL_CULL_FACE);
 	}
 	
-	public void render(Camera camera, BaseModel model, int texture) throws Exception {
+	public void render(Camera camera, WorldMesher mesher, int texture) throws Exception {
 		prepare();
 		enableCulling();
 		shader.start();
 		shader.loadViewMatrix(camera);
-		GL30.glBindVertexArray(model.getId());
-		GL20.glEnableVertexAttribArray(0);
-		GL20.glEnableVertexAttribArray(1);
-		GL20.glEnableVertexAttribArray(2);
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
 		shader.loadTransformationMatrix(Maths.createTransformationMatrix(new Vector3f(0f,0f,0f), new Vector3f(0f,0f,0f), 1.0f));
-		GL11.glDrawElements(GL11.GL_TRIANGLES, model.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
+		for(ChunkMesh mesh:mesher.getMeshes()) {
+			if(mesh.isEmpty()) continue;
+			GL30.glBindVertexArray(mesh.getModel().getId());
+			GL20.glEnableVertexAttribArray(0);
+			GL20.glEnableVertexAttribArray(1);
+			GL20.glEnableVertexAttribArray(2);
+			GL11.glDrawElements(GL11.GL_TRIANGLES, mesh.getModel().getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
+		}
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
 		GL20.glDisableVertexAttribArray(2);

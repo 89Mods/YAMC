@@ -13,21 +13,30 @@ public class Block {
 	
 	public static final Block air;
 	public static final Block stone;
-	public static final Block grass;
-	public static final Block dirt;
+	public static final BlockGrass grass;
+	public static final BlockDirt dirt;
+	public static final Block glass;
+	public static final Block iron;
 	
 	static {
 		air = new Block(0,0) {
 			@Override
 			public boolean shouldRender(int face) { return false; }
+			@Override
+			public boolean isOpaque(int face) { return false; }
 		};
 		stone = new Block(1,1);
-		grass = new Block(2,2);
+		grass = new BlockGrass();
 		dirt = new BlockDirt(3,3);
+		glass = new Block(4,4) {
+			@Override
+			public boolean isOpaque(int face) { return false; }
+		};
+		iron = new Block(5,5);
 	}
 	
 	private int id;
-	private int defaultTextureLoc;
+	protected int defaultTextureLoc;
 	
 	public Block(int id, int textureLocation) {
 		this.id = id;
@@ -40,6 +49,10 @@ public class Block {
 	}
 	
 	public boolean shouldRender(int face) {
+		return true;
+	}
+	
+	public boolean isOpaque(int face) {
 		return true;
 	}
 	

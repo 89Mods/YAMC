@@ -5,6 +5,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import theGhastModding.meshingTest.main.MainGameLoop;
+import theGhastModding.meshingTest.world.World;
 
 public class Camera {
 	
@@ -27,8 +28,11 @@ public class Camera {
 	private float currentStraveSpeed = 0;
 	private boolean isInAir = false;
 	
-	public Camera(long window){
+	private World world;
+	
+	public Camera(long window, World world){
 		this.window = window;
+		this.world = world;
 	}
 	
 	public void update(){
@@ -46,7 +50,7 @@ public class Camera {
 		if(this.pitch <= -361){
 			this.pitch += 360;
 		}
-		int worldHeight = 61;
+		int worldHeight = world.getWorldHeightAt((int)this.position.x, (int)this.position.z);
 		float dx = (float)(distance * Math.sin(Math.toRadians(-getYaw())));
 		float dz = (float)(distance * Math.cos(Math.toRadians(-getYaw())));
 		if(this.getPosition().y() > worldHeight) upwardsSpeed += (GRAVITY * MainGameLoop.delta) / 1000;

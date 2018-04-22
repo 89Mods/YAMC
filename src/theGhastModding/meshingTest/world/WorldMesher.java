@@ -236,12 +236,12 @@ public class WorldMesher {
 					if(blockid != airID && Block.getBlockFromID(blockid) != null) {
 						Block block = Block.getBlockFromID(blockid);
 						int oldFaceCount = faceCount;
-						if(world.getBlock(x+1,y,z) == airID) tryAddFace(Block.BLOCK_FACE_FRONT, block, texturemap, x, y, z);
-						if(world.getBlock(x-1,y,z) == airID) tryAddFace(Block.BLOCK_FACE_BACK, block, texturemap, x, y, z);
-						if(world.getBlock(x,y,z+1) == airID) tryAddFace(Block.BLOCK_FACE_RIGHT, block, texturemap, x, y, z);
-						if(world.getBlock(x,y,z-1) == airID) tryAddFace(Block.BLOCK_FACE_LEFT, block, texturemap, x, y, z);
-						if(world.getBlock(x,y+1,z) == airID) tryAddFace(Block.BLOCK_FACE_TOP, block, texturemap, x, y, z);
-						if(world.getBlock(x,y-1,z) == airID) tryAddFace(Block.BLOCK_FACE_BOTTOM, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x+1,y,z)).isOpaque(Block.BLOCK_FACE_BACK)) tryAddFace(Block.BLOCK_FACE_FRONT, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x-1,y,z)).isOpaque(Block.BLOCK_FACE_FRONT)) tryAddFace(Block.BLOCK_FACE_BACK, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y,z+1)).isOpaque(Block.BLOCK_FACE_LEFT)) tryAddFace(Block.BLOCK_FACE_RIGHT, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y,z-1)).isOpaque(Block.BLOCK_FACE_RIGHT)) tryAddFace(Block.BLOCK_FACE_LEFT, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y+1,z)).isOpaque(Block.BLOCK_FACE_BOTTOM)) tryAddFace(Block.BLOCK_FACE_TOP, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y-1,z)).isOpaque(Block.BLOCK_FACE_TOP)) tryAddFace(Block.BLOCK_FACE_BOTTOM, block, texturemap, x, y, z);
 						if(oldFaceCount != faceCount) blockCount++;
 					}
 				}

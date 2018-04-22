@@ -50,7 +50,7 @@ public class World {
 	
 	private Chunk getChunk(int chunkx, int chunky, int chunkz) {
 		if(chunkx < 0 || chunky >= chunkWidth || chunky < 0 || chunky >= chunkHeight || chunkz < 0 || chunkz >= chunkDepth) return null;
-		return chunks[chunkx * (chunkHeight * chunkDepth) + chunky * chunkDepth + chunkz];
+		return chunks[(chunkx * chunkHeight * chunkDepth) + chunky * chunkDepth + chunkz];
 	}
 	
 	private Chunk getChunkAt(int x, int y, int z) {
@@ -58,18 +58,34 @@ public class World {
 		return getChunk(x / Chunk.CHUNK_WIDTH, y / Chunk.CHUNK_HEIGHT, z / Chunk.CHUNK_DEPTH);
 	}
 	
+	public int getWorldHeightAt(int x, int z) {
+		for(int i = 0; i < height; i++) {
+			if(getBlock(x,i,z) == Block.air.getBlockID()) return i;
+		}
+		return height;
+	}
+	
 	public void generate() {
 		int blockCount = 0;
 		Random r = new Random();
 		for(int i = 0; i < depth; i++) {
 			for(int j = 0; j < width; j++) {
-				for(int k = 0; k < 60; k++) {
+				for(int k = 0; k < 62; k++) {
 					setBlock(j, k, i, Block.stone.getBlockID()); 
-					blockCount++;
-					if(k == 59 && r.nextInt(10) == 0) {
-						setBlock(j, k + 1, i, Block.grass.getBlockID());
-						blockCount++;
+					if(k == 59 && r.nextInt(10) < 4) {
+						setBlock(j, k, i, Block.dirt.getBlockID());
 					}
+					if(k == 60) setBlock(j, k, i, Block.dirt.getBlockID());
+					if(k == 61) {
+						if(r.nextInt(10) < 4) {
+							setBlock(j, k, i, Block.dirt.getBlockID());
+							setBlock(j, k + 1, i, Block.grass.getBlockID());
+							blockCount++;
+						}else {
+							setBlock(j, k, i, Block.grass.getBlockID());
+						}
+					}
+					blockCount++;
 				}
 			}
 		}

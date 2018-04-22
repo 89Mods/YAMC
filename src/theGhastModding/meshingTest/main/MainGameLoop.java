@@ -91,7 +91,7 @@ public class MainGameLoop {
 			int counter = 0;
 			double frameTime = 1000000000D / 60D;
 			long frameTimer = System.nanoTime();
-			Camera camera = new Camera(window);
+			Camera camera = new Camera(window, world);
 			int counter2 = 0;
 			while(!GLFW.glfwWindowShouldClose(window)){
 				if(System.nanoTime() - frameTimer >= frameTime){

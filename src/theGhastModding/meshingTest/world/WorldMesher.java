@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.joml.Vector2f;
-import theGhastModding.meshingTest.resources.BaseModel;
 import theGhastModding.meshingTest.resources.Loader;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
 import theGhastModding.meshingTest.world.blocks.Block;
@@ -295,8 +294,7 @@ public class WorldMesher {
 			textureCoordsArray[i] = textureCoords.get(i);
 		}
 		textureCoords.clear();
-		BaseModel model = loader.loadToVAO(verticesArray, indicesArray, textureCoordsArray, normalsArray);
-		return new ChunkMesh(model, false);
+		return loader.loadChunkMesh(verticesArray, indicesArray, textureCoordsArray, normalsArray, new float[] {});
 	}
 	
 	private void tryAddFace(int face, Block block, BlockTexturemap texturemap, int x, int y, int z) {

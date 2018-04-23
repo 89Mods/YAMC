@@ -21,6 +21,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
 
 import theGhastModding.meshingTest.util.AdvancedBufferUtils;
+import theGhastModding.meshingTest.world.ChunkMesh;
 
 public class Loader {
 	
@@ -32,6 +33,7 @@ public class Loader {
 		if(positions.length % 3 != 0) throw new LoaderException("Invalid vertex count");
 		if(indices.length % 3 != 0) throw new LoaderException("Invalid indices count");
 		if(textureCoords.length % 2 != 0) throw new LoaderException("Invalid texture coordinate count");
+		if(normals.length % 3 != 0) throw new LoaderException("Invalid texture coordinate count");
 		int vaoID = createVAO();
 		bindIndices(indices);
 		storeDataInAttributeList(0, 3, positions);
@@ -39,6 +41,21 @@ public class Loader {
 		storeDataInAttributeList(2, 3, normals);
 		unbindVAO();
 		return new BaseModel(vaoID, indices.length);
+	}
+	
+	public ChunkMesh loadChunkMesh(float[] positions, int[] indices, float[] textureCoords, float[] normals, float[] lightLevels) throws Exception {
+		if(positions.length % 3 != 0) throw new LoaderException("Invalid vertex count");
+		if(indices.length % 3 != 0) throw new LoaderException("Invalid indices count");
+		if(textureCoords.length % 2 != 0) throw new LoaderException("Invalid texture coordinate count");
+		if(normals.length % 3 != 0) throw new LoaderException("Invalid texture coordinate count");
+		int vaoID = createVAO();
+		bindIndices(indices);
+		storeDataInAttributeList(0, 3, positions);
+		storeDataInAttributeList(1, 2, textureCoords);
+		storeDataInAttributeList(2, 3, normals);
+		storeDataInAttributeList(3, 1, lightLevels);
+		unbindVAO();
+		return new ChunkMesh(new BaseModel(vaoID, indices.length), false);
 	}
 	
 	public BaseModel loadToVAO(float[] positions) throws Exception {

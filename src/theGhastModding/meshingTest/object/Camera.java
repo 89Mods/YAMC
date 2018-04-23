@@ -16,8 +16,8 @@ public class Camera {
 	private long window;
 	
 	private static final float RUN_SPEED = 0.02f;
-	private static final float GRAVITY = -0.005f;
-	private static final float JUMP_POWER = 0.5f;
+	private static final float GRAVITY = -0.0001f;
+	private static final float JUMP_POWER = 0.025f;
 	private static final float MOUSE_SENSITIVITY = 0.1f;
 	private static final float STRAVE_SPEED = 0.02f;
 	
@@ -37,7 +37,7 @@ public class Camera {
 	
 	public void update(){
 		checkInputs();
-		float distance = (currentSpeed * MainGameLoop.delta) / 1000;
+		float distance = (currentSpeed * MainGameLoop.delta) / 1000f;
 		if(this.yaw >= 361){
 			this.yaw += -360;
 		}
@@ -53,8 +53,11 @@ public class Camera {
 		int worldHeight = world.getWorldHeightAt((int)this.position.x, (int)this.position.z);
 		float dx = (float)(distance * Math.sin(Math.toRadians(-getYaw())));
 		float dz = (float)(distance * Math.cos(Math.toRadians(-getYaw())));
-		if(this.getPosition().y() > worldHeight) upwardsSpeed += (GRAVITY * MainGameLoop.delta) / 1000;
-		move(-dx, upwardsSpeed, -dz);
+		if(this.getPosition().y() > worldHeight) {
+			upwardsSpeed += (GRAVITY * MainGameLoop.delta) / 1000;
+			isInAir = true;
+		}
+		move(-dx, upwardsSpeed * (MainGameLoop.delta / 1000f), -dz);
 		if(this.getPosition().y <= worldHeight){
 			this.getPosition().y = worldHeight;
 			isInAir = false;

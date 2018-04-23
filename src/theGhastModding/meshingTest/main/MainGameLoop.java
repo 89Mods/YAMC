@@ -17,7 +17,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
 import theGhastModding.meshingTest.object.Camera;
-import theGhastModding.meshingTest.renderer.Renderer;
+import theGhastModding.meshingTest.renderer.BlocksRenderer;
 import theGhastModding.meshingTest.renderer.TextMasterRenderer;
 import theGhastModding.meshingTest.resources.BasicFonts;
 import theGhastModding.meshingTest.resources.Loader;
@@ -60,7 +60,7 @@ public class MainGameLoop {
 		Loader loader = null;
 		World world = null;
 		WorldMesher mesher = null;
-		Renderer renderer = null;
+		BlocksRenderer renderer = null;
 		TextMasterRenderer textRenderer = null;
 		BasicFonts basicFonts = null;
 		BlockTexturemap texturemap = null;
@@ -68,7 +68,7 @@ public class MainGameLoop {
 			loader = new Loader();
 			world = new World(World.DEFAULT_WIDTH, World.DEFAULT_HEIGHT, World.DEFAULT_DEPTH);
 			mesher = new WorldMesher(world);
-			renderer = new Renderer(window);
+			renderer = new BlocksRenderer(window);
 			textRenderer = new TextMasterRenderer(loader);
 			basicFonts = new BasicFonts(loader, window);
 			texturemap = new BlockTexturemap("res/map.png", loader, 48, 48, 16);

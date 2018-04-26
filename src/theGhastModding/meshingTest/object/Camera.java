@@ -1,11 +1,16 @@
 package theGhastModding.meshingTest.object;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import theGhastModding.meshingTest.main.MainGameLoop;
+import theGhastModding.meshingTest.renderer.BlocksRenderer;
+import theGhastModding.meshingTest.util.Maths;
 import theGhastModding.meshingTest.world.World;
+import theGhastModding.meshingTest.world.blocks.Block;
 
 public class Camera {
 	
@@ -20,6 +25,7 @@ public class Camera {
 	private static final float JUMP_POWER = 0.025f;
 	private static final float MOUSE_SENSITIVITY = 0.1f;
 	private static final float STRAVE_SPEED = 0.02f;
+	private static final int REACH_DISTANCE = 4;
 	
 	public boolean DEV_MODE = true;
 	
@@ -67,6 +73,40 @@ public class Camera {
 		dz = (float)(distance * Math.cos(Math.toRadians(-getYaw() + 90)));
 		move(dx, 0, dz);
 		mouse();
+		//Raycast to find the block we're currently looking at
+		Matrix4f invertedView = Maths.createViewMatrix(this);
+		invertedView.invert(invertedView);
+		double[] a = new double[1];
+		double[] b = new double[1];
+		double mousex = a[0];
+		double mousey = b[0];
+		GLFW.glfwGetCursorPos(window, a, b);
+		mousex -= 1f;
+		mousey -= 1f;
+		Vector4f clipCoords = new Vector4f((float)mousex, (float)mousey, -1.0f, 1.0f);
+		Matrix4f invertedProjection = new Matrix4f();
+		BlocksRenderer.projectionMatrix.invert(invertedProjection);
+		invertedProjection.transform(clipCoords, clipCoords);
+		clipCoords.z = -1.0f;
+		clipCoords.w = 0.0f;
+		Vector4f rayWorld = invertedView.transform(clipCoords);
+		Vector3f mouseRay = new Vector3f(rayWorld.x(), rayWorld.y(), rayWorld.z());
+		mouseRay.normalize(mouseRay);
+		Vector3f testRay = new Vector3f();
+		testRay.set(mouseRay.x(), mouseRay.y(), mouseRay.z());
+		for(int i = 0; i < REACH_DISTANCE; i++) {
+			if(world.getBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z()) != Block.air.getBlockID()) {
+				break;
+			}
+		}
+		//TestRay now contains the position of the selected block
+		if(GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_1) == GL11.GL_TRUE) {
+			world.setBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z(), Block.air.getBlockID());
+			world.setBlock((int)position.x(), (int)position.y() - 1, (int)position.z(), 0);
+		}
+		if(GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_2) == GL11.GL_TRUE) {
+			world.setBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z(), Block.iron.getBlockID());
+		}
 	}
 	
 	private void jump(){

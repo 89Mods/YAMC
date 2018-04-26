@@ -23,7 +23,7 @@ public class BlocksRenderer {
 	private static final float FOV = 70;
 	private static final float NEAR_PLANE = 0.1f;
 	private static final float FAR_PLANE = 128;
-	private Matrix4f projectionMatrix;
+	public static Matrix4f projectionMatrix;
 	
 	private static final float RED = 0.1f;
 	private static final float GREEN = 148f / 256f;

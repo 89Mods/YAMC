@@ -238,13 +238,14 @@ public class WorldMesher {
 			for(int j = 0; j < world.getChunkHeight(); j++) {
 				for(int k = 0; k < world.getChunkDepth(); k++) {
 					int indx = getChunkIndex(i, j, k);
-					if(indx != -1 && (world.getChunk(i, j, k).isDirty() || meshes[indx] == null)) {
+					if(indx != -1 && (world.getChunk(i, j, k).isDirty() == true || meshes[indx] == null)) {
 						meshes[indx] = meshChunk(i, j, k, loader, texturemap);
+						world.getChunkAt(i, j, k).markNotDirty();
 					}
 				}
 			}
 		}
-		System.out.println(Integer.toString(faceCount) + " faces in mesh (" + Integer.toString(blockCount) + " blocks)" + ", took " + Long.toString(System.currentTimeMillis() - startTime) + " ms");
+		if(faceCount != 0) System.out.println(Integer.toString(faceCount) + " faces in mesh (" + Integer.toString(blockCount) + " blocks)" + ", took " + Long.toString(System.currentTimeMillis() - startTime) + " ms");
 	}
 	
 	private ChunkMesh meshChunk(int chunkx, int chunky, int chunkz, Loader loader, BlockTexturemap texturemap) throws Exception {

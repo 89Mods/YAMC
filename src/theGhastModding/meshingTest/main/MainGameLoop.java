@@ -114,6 +114,7 @@ public class MainGameLoop {
 						GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 					}
 					camera.update();
+					mesher.updateMeshes(loader, texturemap);
 					GLFW.glfwPollEvents();
 					renderer.render(camera, mesher, texturemap.getTextureID());
 					textRenderer.render();

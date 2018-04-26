@@ -240,7 +240,7 @@ public class WorldMesher {
 					int indx = getChunkIndex(i, j, k);
 					if(indx != -1 && (world.getChunk(i, j, k).isDirty() == true || meshes[indx] == null)) {
 						meshes[indx] = meshChunk(i, j, k, loader, texturemap);
-						world.getChunkAt(i, j, k).markNotDirty();
+						world.getChunk(i, j, k).markNotDirty();
 					}
 				}
 			}

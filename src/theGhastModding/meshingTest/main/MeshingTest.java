@@ -8,7 +8,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 public class MeshingTest {
 	
 	public static final String NAME = "TGM's Minecraft Clone";
-	public static final String VERSION = "mcc_4212018";
+	public static final String VERSION = "mcc_4262018";
 	
 	public static void main(String[] args){
 		if(!GLFW.glfwInit()){

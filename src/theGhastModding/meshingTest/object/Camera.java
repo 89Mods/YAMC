@@ -93,16 +93,16 @@ public class Camera {
 		Vector3f mouseRay = new Vector3f(rayWorld.x(), rayWorld.y(), rayWorld.z());
 		mouseRay.normalize(mouseRay);
 		Vector3f testRay = new Vector3f();
-		testRay.set(mouseRay.x(), mouseRay.y(), mouseRay.z());
+		testRay.set(mouseRay.x() + position.x(), mouseRay.y() + position.y(), mouseRay.z() + position.z());
 		for(int i = 0; i < REACH_DISTANCE; i++) {
 			if(world.getBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z()) != Block.air.getBlockID()) {
 				break;
 			}
+			testRay.add(mouseRay, testRay);
 		}
 		//TestRay now contains the position of the selected block
 		if(GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_1) == GL11.GL_TRUE) {
 			world.setBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z(), Block.air.getBlockID());
-			world.setBlock((int)position.x(), (int)position.y() - 1, (int)position.z(), 0);
 		}
 		if(GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_2) == GL11.GL_TRUE) {
 			world.setBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z(), Block.iron.getBlockID());

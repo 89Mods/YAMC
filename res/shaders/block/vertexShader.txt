@@ -3,8 +3,10 @@
 in vec3 position;
 in vec2 textureCoords;
 in vec3 normal;
+in float light;
 
 out vec2 pass_textureCoords;
+out float pass_lightLevel;
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
@@ -17,5 +19,6 @@ void main(void){
 	
 	gl_Position = projectionMatrix * viewMatrix * worldPosition;
 	pass_textureCoords = textureCoords;
+	pass_lightLevel = light;
 	
 }

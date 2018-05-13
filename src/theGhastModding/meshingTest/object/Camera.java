@@ -76,14 +76,7 @@ public class Camera {
 		//Raycast to find the block we're currently looking at
 		Matrix4f invertedView = Maths.createViewMatrix(this);
 		invertedView.invert(invertedView);
-		double[] a = new double[1];
-		double[] b = new double[1];
-		double mousex = a[0];
-		double mousey = b[0];
-		GLFW.glfwGetCursorPos(window, a, b);
-		mousex -= 1f;
-		mousey -= 1f;
-		Vector4f clipCoords = new Vector4f((float)mousex, (float)mousey, -1.0f, 1.0f);
+		Vector4f clipCoords = new Vector4f(-0.5f, 0, -1.0f, 1.0f);
 		Matrix4f invertedProjection = new Matrix4f();
 		BlocksRenderer.projectionMatrix.invert(invertedProjection);
 		invertedProjection.transform(clipCoords, clipCoords);
@@ -93,9 +86,10 @@ public class Camera {
 		Vector3f mouseRay = new Vector3f(rayWorld.x(), rayWorld.y(), rayWorld.z());
 		mouseRay.normalize(mouseRay);
 		Vector3f testRay = new Vector3f();
+		//System.out.println(mouseRay);
 		testRay.set(mouseRay.x() + position.x(), mouseRay.y() + position.y(), mouseRay.z() + position.z());
 		for(int i = 0; i < REACH_DISTANCE; i++) {
-			if(world.getBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z()) != Block.air.getBlockID()) {
+			if(world.getBlock((int)testRay.x(), (int)testRay.y() , (int)testRay.z()) != Block.air.getBlockID()) {
 				break;
 			}
 			testRay.add(mouseRay, testRay);
@@ -106,6 +100,7 @@ public class Camera {
 		}
 		if(GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_2) == GL11.GL_TRUE) {
 			world.setBlock((int)testRay.x(), (int)testRay.y(), (int)testRay.z(), Block.iron.getBlockID());
+			world.placeLightSource((int)testRay.x(), (int)testRay.y() + 1, (int)testRay.z(), 15);
 		}
 	}
 	

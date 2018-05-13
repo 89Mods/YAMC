@@ -1,6 +1,8 @@
 #version 330 core
 
 in vec2 pass_textureCoords;
+in float pass_lightLevel;
+
 out vec4 out_Color;
 
 uniform sampler2D textureSampler;
@@ -11,6 +13,9 @@ void main(void){
 	if(textureColor.a < 0.5){
 		discard;
 	}
+	textureColor.r *= pass_lightLevel;
+	textureColor.g *= pass_lightLevel;
+	textureColor.b *= pass_lightLevel,
 	
 	out_Color = textureColor;
 	

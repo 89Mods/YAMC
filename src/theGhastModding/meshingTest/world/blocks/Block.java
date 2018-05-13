@@ -23,14 +23,14 @@ public class Block {
 			@Override
 			public boolean shouldRender(int face) { return false; }
 			@Override
-			public boolean isOpaque(int face) { return false; }
+			public boolean isOpaque() { return false; }
 		};
 		stone = new Block(1,1);
 		grass = new BlockGrass();
 		dirt = new BlockDirt(3,3);
 		glass = new Block(4,4) {
 			@Override
-			public boolean isOpaque(int face) { return false; }
+			public boolean isOpaque() { return false; }
 		};
 		iron = new Block(5,5);
 	}
@@ -52,7 +52,7 @@ public class Block {
 		return true;
 	}
 	
-	public boolean isOpaque(int face) {
+	public boolean isOpaque() {
 		return true;
 	}
 	

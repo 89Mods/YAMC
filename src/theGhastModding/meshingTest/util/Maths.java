@@ -43,4 +43,11 @@ public class Maths {
         return viewMatrix;
     }
 	
+    public static float distance(int x1, int y1, int z1, int x2, int y2, int z2) {
+    	float x3 = x1 - x2;
+    	float y3 = y1 - y2;
+    	float z3 = z1 - z2;
+    	return (float) Math.sqrt(x3 * x3 + y3 * y3 + z3 * z3);
+    }
+    
 }

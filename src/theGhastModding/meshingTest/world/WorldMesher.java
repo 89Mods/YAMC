@@ -216,6 +216,7 @@ public class WorldMesher {
 	private List<Integer> indices;
 	private List<Float> normals;
 	private List<Float> textureCoords;
+	private List<Float> lightLevels;
 	private int faceCount;
 	private int blockCount;
 	
@@ -253,6 +254,7 @@ public class WorldMesher {
 		indices = new ArrayList<Integer>();
 		normals = new ArrayList<Float>();
 		textureCoords = new ArrayList<Float>();
+		lightLevels = new ArrayList<Float>();
 		int airID = Block.air.getBlockID();
 		for(int x = Chunk.CHUNK_WIDTH * chunkx; x < Chunk.CHUNK_WIDTH * (chunkx + 1); x++) {
 			for(int y = Chunk.CHUNK_HEIGHT * chunky; y < Chunk.CHUNK_HEIGHT * (chunky + 1); y++) {
@@ -261,12 +263,12 @@ public class WorldMesher {
 					if(blockid != airID && Block.getBlockFromID(blockid) != null) {
 						Block block = Block.getBlockFromID(blockid);
 						int oldFaceCount = faceCount;
-						if(!Block.getBlockFromID(world.getBlock(x+1,y,z)).isOpaque(Block.BLOCK_FACE_BACK)) tryAddFace(Block.BLOCK_FACE_FRONT, block, texturemap, x, y, z);
-						if(!Block.getBlockFromID(world.getBlock(x-1,y,z)).isOpaque(Block.BLOCK_FACE_FRONT)) tryAddFace(Block.BLOCK_FACE_BACK, block, texturemap, x, y, z);
-						if(!Block.getBlockFromID(world.getBlock(x,y,z+1)).isOpaque(Block.BLOCK_FACE_LEFT)) tryAddFace(Block.BLOCK_FACE_RIGHT, block, texturemap, x, y, z);
-						if(!Block.getBlockFromID(world.getBlock(x,y,z-1)).isOpaque(Block.BLOCK_FACE_RIGHT)) tryAddFace(Block.BLOCK_FACE_LEFT, block, texturemap, x, y, z);
-						if(!Block.getBlockFromID(world.getBlock(x,y+1,z)).isOpaque(Block.BLOCK_FACE_BOTTOM)) tryAddFace(Block.BLOCK_FACE_TOP, block, texturemap, x, y, z);
-						if(!Block.getBlockFromID(world.getBlock(x,y-1,z)).isOpaque(Block.BLOCK_FACE_TOP)) tryAddFace(Block.BLOCK_FACE_BOTTOM, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x+1,y,z)).isOpaque()) tryAddFace(Block.BLOCK_FACE_FRONT, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x-1,y,z)).isOpaque()) tryAddFace(Block.BLOCK_FACE_BACK, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y,z+1)).isOpaque()) tryAddFace(Block.BLOCK_FACE_RIGHT, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y,z-1)).isOpaque()) tryAddFace(Block.BLOCK_FACE_LEFT, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y+1,z)).isOpaque()) tryAddFace(Block.BLOCK_FACE_TOP, block, texturemap, x, y, z);
+						if(!Block.getBlockFromID(world.getBlock(x,y-1,z)).isOpaque()) tryAddFace(Block.BLOCK_FACE_BOTTOM, block, texturemap, x, y, z);
 						if(oldFaceCount != faceCount) blockCount++;
 					}
 				}
@@ -295,7 +297,12 @@ public class WorldMesher {
 			textureCoordsArray[i] = textureCoords.get(i);
 		}
 		textureCoords.clear();
-		return loader.loadChunkMesh(verticesArray, indicesArray, textureCoordsArray, normalsArray, new float[] {});
+		float[] lightLevelsArray = new float[lightLevels.size()];
+		for(int i = 0; i < lightLevels.size(); i++) {
+			lightLevelsArray[i] = lightLevels.get(i);
+		}
+		lightLevels.clear();
+		return loader.loadChunkMesh(verticesArray, indicesArray, textureCoordsArray, normalsArray, lightLevelsArray);
 	}
 	
 	private void tryAddFace(int face, Block block, BlockTexturemap texturemap, int x, int y, int z) {
@@ -329,7 +336,40 @@ public class WorldMesher {
 			float offsetCoord = (faceTextureCoords[face][i] / (float)texturemap.getBlocksPerRow()) + (float)offset / (float)texturemap.getBlocksPerRow();
 			textureCoords.add(offsetCoord);
 		}
+		float lightLevel = getLightLevelForFace(x, y, z, face);
+		lightLevels.add(lightLevel);
+		lightLevels.add(lightLevel);
+		lightLevels.add(lightLevel);
+		lightLevels.add(lightLevel);
 		faceCount++;
+	}
+	
+	private float getLightLevelForFace(int x, int y, int z, int face) {
+		int lightLevel = 0;
+		switch(face) {
+			default:
+				lightLevel = 0;
+				break;
+			case Block.BLOCK_FACE_FRONT:
+				lightLevel = world.getLightLevel(x + 1, y, z);
+				break;
+			case Block.BLOCK_FACE_BACK:
+				lightLevel = world.getLightLevel(x - 1, y, z);
+				break;
+			case Block.BLOCK_FACE_RIGHT:
+				lightLevel = world.getLightLevel(x, y, z + 1);
+				break;
+			case Block.BLOCK_FACE_LEFT:
+				lightLevel = world.getLightLevel(x, y, z - 1);
+				break;
+			case Block.BLOCK_FACE_TOP:
+				lightLevel = world.getLightLevel(x, y + 1, z);
+				break;
+			case Block.BLOCK_FACE_BOTTOM:
+				lightLevel = world.getLightLevel(x, y - 1, z);
+				break;
+		}
+		return (float)lightLevel / 15.0f;
 	}
 	
 }

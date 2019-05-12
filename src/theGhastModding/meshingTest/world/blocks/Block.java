@@ -1,5 +1,10 @@
 package theGhastModding.meshingTest.world.blocks;
 
+import java.util.Random;
+
+import theGhastModding.meshingTest.phys.AABB;
+import theGhastModding.meshingTest.world.World;
+
 public class Block {
 	
 	public static final int BLOCK_FACE_LEFT = 0;
@@ -17,6 +22,20 @@ public class Block {
 	public static final BlockDirt dirt;
 	public static final Block glass;
 	public static final Block iron;
+	public static final Block gold;
+	public static final Block leaves;
+	public static final Block log;
+	public static final Block bedrock;
+	public static final Block oreGold;
+	public static final Block oreIron;
+	public static final Block oreCoal;
+	public static final Block oreDiamond;
+	public static final Block oreRedstone;
+	public static final Block sand;
+	public static final Block water;
+	public static final Block planks;
+	public static final Block bricks;
+	public static final Block tnt;
 	
 	static {
 		air = new Block(0,0) {
@@ -24,24 +43,64 @@ public class Block {
 			public boolean shouldRender(int face) { return false; }
 			@Override
 			public boolean isOpaque() { return false; }
+			@Override
+			protected AABB getBoundingBox() { return null; }
 		};
 		stone = new Block(1,1);
 		grass = new BlockGrass();
-		dirt = new BlockDirt(3,3);
-		glass = new Block(4,4) {
+		dirt = new BlockDirt(3,8);
+		glass = new Block(4,9) {
 			@Override
 			public boolean isOpaque() { return false; }
 		};
-		iron = new Block(5,5);
+		iron = new Block(5,10).setLuminoscity(10);
+		gold = new Block(6,11);
+		leaves = new BlockLeaves().setOpacity(3);
+		log = new Block(8,17) {
+			@Override
+			public int getTexture(int face) {
+				if(face == Block.BLOCK_FACE_BOTTOM || face == Block.BLOCK_FACE_TOP) {
+					return 18;
+				}
+				return this.defaultTextureLoc;
+			}
+		};
+		bedrock = new Block(9,3);
+		oreGold = new Block(10,24);
+		oreIron = new Block(11,25);
+		oreCoal = new Block(12,26);
+		oreDiamond = new Block(12 + 1,27);
+		oreRedstone = new Block(14, 28).setLuminoscity(9);
+		sand = new BlockSand();
+		water = new BlockWater().setOpacity(2);
+		planks = new Block(17, 29);
+		bricks = new Block(18, 32);
+		tnt = new BlockTNT();
 	}
 	
 	private int id;
 	protected int defaultTextureLoc;
+	protected int luminoscity = 0;
+	protected int opacity = 0;
+	
+	private static AABB defaultHitbox = new AABB(0, 0, 0, 1, 1, 1);
 	
 	public Block(int id, int textureLocation) {
 		this.id = id;
 		this.defaultTextureLoc = textureLocation;
 		allBlocks[id] = this;
+	}
+	
+	public void updateTick(World world, int x, int y, int z, Random rng) {
+		
+	}
+	
+	public void onNeighborChanged(World world, int x, int y, int z, int x_n, int y_n, int z_n, Random rng) {
+		
+	}
+	
+	public void onBlockPlaced(World world, int x, int y, int z, Random rng) {
+		
 	}
 	
 	public int getTexture(int face) {
@@ -62,6 +121,38 @@ public class Block {
 	
 	public static Block getBlockFromID(int id) {
 		return allBlocks[id];
+	}
+	
+	protected Block setLuminoscity(int lum) {
+		this.luminoscity = lum;
+		return this;
+	}
+	
+	public int getLuminoscity() {
+		return this.luminoscity;
+	}
+	
+	public boolean canRenderThrough() {
+		return false;
+	}
+	
+	protected Block setOpacity(int op) {
+		this.opacity = op;
+		return this;
+	}
+	
+	public int getOpacity() {
+		return this.opacity;
+	}
+	
+	protected AABB getBoundingBox() {
+		return defaultHitbox;
+	}
+	
+	public AABB getBoundingBox(int x, int y, int z) {
+		AABB box = getBoundingBox();
+		if(box == null) return null;
+		return box.moveClone(x, y, z);
 	}
 	
 }

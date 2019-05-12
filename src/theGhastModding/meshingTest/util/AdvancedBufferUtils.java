@@ -7,9 +7,9 @@ import org.lwjgl.BufferUtils;
 
 public class AdvancedBufferUtils {
 	
-	public static FloatBuffer storeDataInBuffer(float[] data){
-		FloatBuffer buffer = BufferUtils.createFloatBuffer(data.length);
-		buffer.put(data);
+	public static FloatBuffer storeDataInBuffer(float[] data, int len){
+		FloatBuffer buffer = BufferUtils.createFloatBuffer(len);
+		buffer.put(data, 0, len);
 		buffer.flip();
 		return buffer;
 	}
@@ -27,9 +27,9 @@ public class AdvancedBufferUtils {
 		return buffer;
 	}
 	
-	public static IntBuffer storeDataInBuffer(int[] data){
-		IntBuffer buffer = BufferUtils.createIntBuffer(data.length);
-		buffer.put(data);
+	public static IntBuffer storeDataInBuffer(int[] data, int len){
+		IntBuffer buffer = BufferUtils.createIntBuffer(len);
+		buffer.put(data, 0, len);
 		buffer.flip();
 		return buffer;
 	}

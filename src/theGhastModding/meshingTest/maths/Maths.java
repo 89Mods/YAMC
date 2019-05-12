@@ -1,4 +1,4 @@
-package theGhastModding.meshingTest.util;
+package theGhastModding.meshingTest.maths;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -38,9 +38,21 @@ public class Maths {
         viewMatrix.rotate((float) Math.toRadians(camera.getYaw()), new Vector3f(0, 1, 0), viewMatrix);
         viewMatrix.rotate((float) Math.toRadians(camera.getRoll()), new Vector3f(0, 0, 1), viewMatrix);
         Vector3f cameraPos = camera.getPosition();
-        Vector3f negativeCameraPos = new Vector3f(-cameraPos.x,-cameraPos.y,-cameraPos.z);
+        Vector3f negativeCameraPos = new Vector3f(-cameraPos.x,-(cameraPos.y + 1.0f),-cameraPos.z);
         viewMatrix.translate(negativeCameraPos, viewMatrix);
         return viewMatrix;
+    }
+    
+    public static Matrix4f createStaticViewMatrix() {
+    	Matrix4f viewMatrix = new Matrix4f();
+    	viewMatrix.identity();
+        viewMatrix.rotate((float) Math.toRadians(0), new Vector3f(1, 0, 0), viewMatrix);
+        viewMatrix.rotate((float) Math.toRadians(0), new Vector3f(0, 1, 0), viewMatrix);
+        viewMatrix.rotate((float) Math.toRadians(0), new Vector3f(0, 0, 1), viewMatrix);
+        Vector3f cameraPos = new Vector3f(0, 0, 0);
+        Vector3f negativeCameraPos = new Vector3f(-cameraPos.x,-(cameraPos.y + 1.0f),-cameraPos.z);
+        viewMatrix.translate(negativeCameraPos, viewMatrix);
+    	return viewMatrix;
     }
 	
     public static float distance(int x1, int y1, int z1, int x2, int y2, int z2) {

@@ -3,19 +3,24 @@ package theGhastModding.meshingTest.main;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.time.ZonedDateTime;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
+import theGhastModding.meshingTest.gui.GuiRenderer;
+import theGhastModding.meshingTest.gui.GuiTexture;
 import theGhastModding.meshingTest.object.Camera;
 import theGhastModding.meshingTest.renderer.BlocksRenderer;
 import theGhastModding.meshingTest.renderer.TextMasterRenderer;
@@ -23,8 +28,10 @@ import theGhastModding.meshingTest.resources.BasicFonts;
 import theGhastModding.meshingTest.resources.Loader;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
 import theGhastModding.meshingTest.text.GUIText;
+import theGhastModding.meshingTest.util.FileChannelOutputStream;
 import theGhastModding.meshingTest.world.World;
 import theGhastModding.meshingTest.world.WorldMesher;
+import theGhastModding.meshingTest.world.gen.WorldGeneratorDefault;
 
 public class MainGameLoop {
 	
@@ -35,9 +42,13 @@ public class MainGameLoop {
 	//TODO: same for this
 	public static boolean cursorGrabbed = true;
 	
-	public MainGameLoop(long window){
+	private int spawnx,spawny;
+	
+	public MainGameLoop(long window, int spawnx, int spawny){
 		try {
 			this.window = window;
+			this.spawnx = spawnx;
+			this.spawny = spawny;
 			screenshotsFolder = new File("screenshots/");
 			if(!screenshotsFolder.exists()){
 				try {
@@ -59,31 +70,63 @@ public class MainGameLoop {
 	public void start(){
 		Loader loader = null;
 		World world = null;
+		Thread worldThread = null;
 		WorldMesher mesher = null;
 		BlocksRenderer renderer = null;
 		TextMasterRenderer textRenderer = null;
+		GuiRenderer guiRenderer = null;
 		BasicFonts basicFonts = null;
 		BlockTexturemap texturemap = null;
+		Random rng = new Random();
+		GuiTexture loadingScreen = null;
 		try {
 			loader = new Loader();
-			world = new World(World.DEFAULT_WIDTH, World.DEFAULT_HEIGHT, World.DEFAULT_DEPTH);
-			mesher = new WorldMesher(world);
+			world = new World(256, 128, 256);
+			worldThread = new Thread(world);
 			renderer = new BlocksRenderer(window);
 			textRenderer = new TextMasterRenderer(loader);
+			guiRenderer = new GuiRenderer(loader);
 			basicFonts = new BasicFonts(loader, window);
-			texturemap = new BlockTexturemap("res/map.png", loader, 48, 48, 16);
+			
+			try {
+				texturemap = new BlockTexturemap("res/map_placeholder.png", loader, 256, 256, 32);
+				loadingScreen = new GuiTexture(loader.loadTextureFromFile("res/GUI/menubg_placeholder.png"), new Vector2f(0, 0), new Vector2f(1f, 1f));
+			} catch(Exception e) {
+				JOptionPane.showMessageDialog(null, "Error loading textures: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				e.printStackTrace();
+				System.exit(1);
+			}
+			
+			mesher = new WorldMesher(world, loader, texturemap);
 		}catch(Exception e){
 			JOptionPane.showMessageDialog(null, "Error creating rendering system: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 			System.exit(1);
 		}
-		world.generate();
+		
 		GUIText text = new GUIText("FPS: 0", 1, basicFonts.arial, new Vector2f(0, 0), 1f, false);
 		text.setColour(1, 1, 1);
 		text.setStyle(GUIText.PLAIN);
+		
+		GUIText progressText = new GUIText("Generating world: 0%", 1.5f, basicFonts.arial, new Vector2f(0f, 0.45f), 1f, true);
+		progressText.setColour(1, 1, 1);
+		progressText.setStyle(GUIText.BOLD);
+		
 		try {
-			mesher.updateMeshes(loader, texturemap);
 			textRenderer.loadText(text);
+			textRenderer.loadText(progressText);
+			guiRenderer.addGui(loadingScreen);
+			
+			GLFW.glfwPollEvents();
+			guiRenderer.render();
+			textRenderer.render();
+			GLFW.glfwSwapBuffers(window);
+			
+			world.loadWorldData();
+			world.setWorldGen(new WorldGeneratorDefault(world));
+			world.startGenerateSpawnChunks();
+			worldThread.start();
+			
 			Dimension d = getWindowSize(window);
 			System.out.println(d.toString());
 			long lastTime = System.currentTimeMillis();
@@ -96,14 +139,57 @@ public class MainGameLoop {
 				if(System.nanoTime() - frameTimer >= frameTime){
 					delta = (System.nanoTime() - frameTimer) / 1000;
 					frameTimer = System.nanoTime();
+					if(world.generatingSpawn) {
+						GLFW.glfwPollEvents();
+						guiRenderer.render();
+						textRenderer.render();
+						GLFW.glfwSwapBuffers(window);
+						textRenderer.removeText(progressText, true);
+						progressText.setText("Generating world: " + String.format("%.1f", world.getGenerationProgress()) + "%");
+						textRenderer.loadText(progressText);
+						continue;
+					}else if(!loadingScreen.isHidden()) {
+						loadingScreen.setHidden(true);
+						textRenderer.removeText(progressText, true);
+						camera.getPosition().x = 50;
+						camera.getPosition().y = 128;
+						camera.getPosition().z = 50;
+						camera.loadState();
+						mesher.updateMeshesNow();
+						mesher.updateRendererMeshes();
+						mesher.startMeshingThread();
+					}
+					
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ESCAPE) == GL11.GL_TRUE){
 						GLFW.glfwSetWindowShouldClose(window, true);
 					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_0) == GL11.GL_TRUE){
 						System.out.println(camera.getPosition().toString());
 					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_R) == GL11.GL_TRUE){
+						camera.getPosition().x = 32;
+						camera.getPosition().y = world.getHeight() + 1;
+						camera.getPosition().z = 32;
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) == GL11.GL_TRUE){
+						camera.getPosition().x = spawnx;
+						camera.getPosition().y = world.getHeight() + 1;
+						camera.getPosition().z = spawny;
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_T) == GL11.GL_TRUE){
+						camera.getPosition().y = world.getHeight() + 1;
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_1) == GL11.GL_TRUE){
+						camera.setYaw(camera.getYaw() + 1f);
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_2) == GL11.GL_TRUE){
+						camera.setYaw(camera.getYaw() - 1f);
+					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_F2) == GL11.GL_TRUE){
 						screenshot();
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_K) == GL11.GL_TRUE){
+						world.setSunlight(rng.nextInt(16));
 					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_P) == GL11.GL_TRUE){
 						GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
@@ -113,12 +199,18 @@ public class MainGameLoop {
 						cursorGrabbed = true;
 						GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 					}
+					
 					camera.update();
-					mesher.updateMeshes(loader, texturemap);
+					mesher.updateRendererMeshes();
 					GLFW.glfwPollEvents();
-					renderer.render(camera, mesher, texturemap.getTextureID());
+					renderer.render(camera, mesher, texturemap);
+					
+					guiRenderer.render();
 					textRenderer.render();
+					if(mesher.e != null) throw mesher.e;
+					if(world.e != null) throw world.e;
 					GLFW.glfwSwapBuffers(window);
+					
 					counter++;
 				}
 				if(System.currentTimeMillis() - lastTime >= 1000){
@@ -132,10 +224,34 @@ public class MainGameLoop {
 					if(counter2 >= 10){
 						//GLFW.glfwSetWindowShouldClose(window, true);
 					}
+					if(!world.generatingSpawn) {
+						Vector3f pos = camera.getPosition();
+						world.updateLoadedChunks((int)pos.x, (int)pos.y, (int)pos.z);
+					}
 					//System.gc();
 				}
 			}
+			GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+			cursorGrabbed = false;
 			screenshot();
+			loadingScreen.setHidden(false);
+			progressText.setText("Saving World...");
+			textRenderer.loadText(progressText);
+			guiRenderer.render();
+			textRenderer.render();
+			GLFW.glfwSwapBuffers(window);
+			
+			world.running = false;
+			mesher.running = false;
+			worldThread.join(2048);
+			world.join();
+			GLFW.glfwPollEvents();
+			mesher.join();
+			GLFW.glfwPollEvents();
+			camera.saveState();
+			GLFW.glfwPollEvents();
+			world.saveWorld();
+			GLFW.glfwPollEvents();
 			loader.cleanUp();
 			renderer.cleanUp();
 			textRenderer.cleanUp();
@@ -146,6 +262,7 @@ public class MainGameLoop {
 			e.printStackTrace();
 			System.exit(1);
 		}
+		System.exit(0);
 	}
 	
 	public void screenshot(){
@@ -155,14 +272,12 @@ public class MainGameLoop {
 			int height = (int)windowSize.height;
 			GL11.glReadBuffer(GL11.GL_FRONT);
 			ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
-			GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer );
-			File file = new File(screenshotsFolder.getPath() + "/" + ZonedDateTime.now().toString().replaceAll(":", "_").replaceAll("/", "_") + MeshingTest.NAME.replaceAll(" ", "_") + "_" + MeshingTest.VERSION + ".png");
+			GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+			RandomAccessFile file = new RandomAccessFile(screenshotsFolder.getPath() + "/" + ZonedDateTime.now().toString().replaceAll(":", "_").replaceAll("/", "_") + MeshingTest.NAME.replaceAll(" ", "_") + "_" + MeshingTest.VERSION + ".png", "rw");
 			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			   
-			for(int x = 0; x < width; x++)
-			{
-			    for(int y = 0; y < height; y++)
-			    {
+			for(int x = 0; x < width; x++) {
+			    for(int y = 0; y < height; y++) {
 			        int i = (x + (width * y)) * 4;
 			        int r = buffer.get(i) & 0xFF;
 			        int g = buffer.get(i + 1) & 0xFF;
@@ -170,7 +285,11 @@ public class MainGameLoop {
 			        image.setRGB(x, height - (y + 1), (0xFF << 24) | (r << 16) | (g << 8) | b);
 			    }
 			}
-			ImageIO.write(image, "png", file);
+			FileChannelOutputStream out = new FileChannelOutputStream(file.getChannel());
+			ImageIO.write(image, "png", out);
+			out.close();
+			file.close();
+			System.out.println("Screenshot taken!");
 		}catch(Exception e){
 			JOptionPane.showMessageDialog(null, "Error taking screenshot: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();

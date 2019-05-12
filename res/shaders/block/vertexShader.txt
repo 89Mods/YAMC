@@ -7,13 +7,17 @@ in float light;
 
 out vec2 pass_textureCoords;
 out float pass_lightLevel;
+out float isSelected;
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 transformationMatrix;
+uniform vec3 selectedPosition;
 
 void main(void){
 	
+	if(position.x >= selectedPosition.x -1 && position.x <= selectedPosition.x + 1 && position.y >= selectedPosition.y - 1 && position.y <= selectedPosition.y + 1 && position.z >= selectedPosition.z - 1 && position.z <= selectedPosition.z + 1) isSelected = 1.0;
+	else isSelected = 0.0;
 	vec4 worldPosition = transformationMatrix * vec4(position, 1.0);
 	vec4 positionRelativeToCam = viewMatrix * worldPosition;
 	

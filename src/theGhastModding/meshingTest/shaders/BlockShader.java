@@ -1,8 +1,10 @@
 package theGhastModding.meshingTest.shaders;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
+import theGhastModding.meshingTest.maths.Maths;
 import theGhastModding.meshingTest.object.Camera;
-import theGhastModding.meshingTest.util.Maths;
 
 public class BlockShader extends ShaderProgram {
 	
@@ -12,6 +14,7 @@ public class BlockShader extends ShaderProgram {
 	private int location_projectionMatrix;
 	private int location_viewMatrix;
 	private int location_transformationMatrix;
+	private int location_selectedPosition;
 	
 	public BlockShader() throws Exception {
 		super(VERTEX_FILE, FRAGMENT_FILE);
@@ -30,6 +33,7 @@ public class BlockShader extends ShaderProgram {
 		location_projectionMatrix = super.getUniformLocation("projectionMatrix");
 		location_viewMatrix = super.getUniformLocation("viewMatrix");
 		location_transformationMatrix = super.getUniformLocation("transformationMatrix");
+		location_selectedPosition = super.getUniformLocation("selectedPosition");
 	}
 	
 	public void loadProjectionMatrix(Matrix4f matrix){
@@ -40,8 +44,16 @@ public class BlockShader extends ShaderProgram {
 		super.loadMatrix(location_viewMatrix, Maths.createViewMatrix(camera));
 	}
 	
+	public void clearViewMatrix() {
+		super.loadMatrix(location_viewMatrix, Maths.createStaticViewMatrix());
+	}
+	
 	public void loadTransformationMatrix(Matrix4f matrix) {
 		super.loadMatrix(location_transformationMatrix, matrix);
+	}
+	
+	public void loadSelectedPosition(Vector3f pos) {
+		super.loadVector(location_selectedPosition, pos);
 	}
 	
 }

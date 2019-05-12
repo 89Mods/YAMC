@@ -3,7 +3,10 @@
 in vec2 pass_textureCoords;
 in float pass_lightLevel;
 
+in vec4 gl_Color;
+
 out vec4 out_Color;
+in float isSelected;
 
 uniform sampler2D textureSampler;
 
@@ -13,9 +16,11 @@ void main(void){
 	if(textureColor.a < 0.5){
 		discard;
 	}
-	textureColor.r *= pass_lightLevel;
-	textureColor.g *= pass_lightLevel;
-	textureColor.b *= pass_lightLevel,
+	float ll = pass_lightLevel;
+	if(isSelected == 1.0) ll = 1.25;
+	textureColor.r *= ll;
+	textureColor.g *= ll;
+	textureColor.b *= ll,
 	
 	out_Color = textureColor;
 	

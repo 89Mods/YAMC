@@ -20,4 +20,8 @@ public class ChunkMesh {
 		return this.isEmpty;
 	}
 	
+	public void deleted() {
+		this.isEmpty = true;
+	}
+	
 }

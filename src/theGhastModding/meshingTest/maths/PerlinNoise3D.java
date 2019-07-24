@@ -44,18 +44,24 @@ public class PerlinNoise3D {
 		double wy = weight(sy);
 		double wz = weight(sz);
 		
-		nodex %= width;
-		nodey %= height;
-		nodez %= depth;
+		nodex %= width + 1;
+		nodey %= height + 1;
+		nodez %= depth + 1;
+		int nodex1 = nodex + 1;
+		int nodey1 = nodey + 1;
+		int nodez1 = nodez + 1;
+		nodex1 %= width + 1;
+		nodey1 %= height + 1;
+		nodez1 %= depth + 1;
 		
 		double dot0 = sx * noiseMap[nodex][nodey][nodez][0] + sy * noiseMap[nodex][nodey][nodez][1] + sz * noiseMap[nodex][nodey][nodez][2];
-		double dot1 = (sx - 1) * noiseMap[nodex + 1][nodey][nodez][0] + sy * noiseMap[nodex + 1][nodey][nodez][1] + sz * noiseMap[nodex + 1][nodey][nodez][2];
-		double dot2 = sx * noiseMap[nodex][nodey + 1][nodez][0] + (sy - 1) * noiseMap[nodex][nodey + 1][nodez][1] + sz * noiseMap[nodex][nodey + 1][nodez][2];
-		double dot3 = (sx - 1) * noiseMap[nodex + 1][nodey + 1][nodez][0] + (sy - 1) * noiseMap[nodex + 1][nodey + 1][nodez][1] + sz * noiseMap[nodex + 1][nodey + 1][nodez][2];
-		double dot4 = sx * noiseMap[nodex][nodey][nodez + 1][0] + sy * noiseMap[nodex][nodey][nodez + 1][1] + (sz - 1) * noiseMap[nodex][nodey][nodez + 1][2];
-		double dot5 = (sx - 1) * noiseMap[nodex + 1][nodey][nodez + 1][0] + sy * noiseMap[nodex + 1][nodey][nodez + 1][1] + (sz - 1) * noiseMap[nodex + 1][nodey][nodez + 1][2];
-		double dot6 = sx * noiseMap[nodex][nodey + 1][nodez + 1][0] + (sy - 1) * noiseMap[nodex][nodey + 1][nodez + 1][1] + (sz - 1) * noiseMap[nodex][nodey + 1][nodez + 1][2];
-		double dot7 = (sx - 1) * noiseMap[nodex + 1][nodey + 1][nodez + 1][0] + (sy - 1) * noiseMap[nodex + 1][nodey + 1][nodez + 1][1] + (sz - 1) * noiseMap[nodex + 1][nodey + 1][nodez + 1][2];
+		double dot1 = (sx - 1) * noiseMap[nodex1][nodey][nodez][0] + sy * noiseMap[nodex1][nodey][nodez][1] + sz * noiseMap[nodex1][nodey][nodez][2];
+		double dot2 = sx * noiseMap[nodex][nodey1][nodez][0] + (sy - 1) * noiseMap[nodex][nodey1][nodez][1] + sz * noiseMap[nodex][nodey1][nodez][2];
+		double dot3 = (sx - 1) * noiseMap[nodex1][nodey1][nodez][0] + (sy - 1) * noiseMap[nodex1][nodey1][nodez][1] + sz * noiseMap[nodex1][nodey1][nodez][2];
+		double dot4 = sx * noiseMap[nodex][nodey][nodez1][0] + sy * noiseMap[nodex][nodey][nodez1][1] + (sz - 1) * noiseMap[nodex][nodey][nodez1][2];
+		double dot5 = (sx - 1) * noiseMap[nodex1][nodey][nodez1][0] + sy * noiseMap[nodex1][nodey][nodez1][1] + (sz - 1) * noiseMap[nodex1][nodey][nodez1][2];
+		double dot6 = sx * noiseMap[nodex][nodey1][nodez1][0] + (sy - 1) * noiseMap[nodex][nodey1][nodez1][1] + (sz - 1) * noiseMap[nodex][nodey1][nodez1][2];
+		double dot7 = (sx - 1) * noiseMap[nodex1][nodey1][nodez1][0] + (sy - 1) * noiseMap[nodex1][nodey1][nodez1][1] + (sz - 1) * noiseMap[nodex1][nodey1][nodez1][2];
 		
 		double ix0 = lerp(dot0, dot1, wx);
 		double ix1 = lerp(dot2, dot3, wx);

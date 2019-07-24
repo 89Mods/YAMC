@@ -268,7 +268,6 @@ public class WorldMesher implements Runnable {
 	private static boolean debug = false;
 	private volatile boolean hasUpdated = true;
 	public volatile boolean newMeshesAvailable = true;
-	private int activeMeshers = 0;
 	
 	private Map<Vector3i, ChunkMesh> allMeshes;
 	
@@ -327,6 +326,8 @@ public class WorldMesher implements Runnable {
 		if(thread != null && thread.isAlive()) thread.join(2048);
 	}
 	
+	private long startTime = System.currentTimeMillis();
+	
 	public void updateMeshesNow() throws Exception {
 		if(!hasUpdated) return;
 		faceCount = 0;
@@ -340,6 +341,7 @@ public class WorldMesher implements Runnable {
 			Chunk[] css2 = world.getMasterChunk(cs[0].getChunkx() - 1, cs[0].getChunkz());
 			Chunk[] css3 = world.getMasterChunk(cs[0].getChunkx(), cs[0].getChunkz() + 1);
 			Chunk[] css4 = world.getMasterChunk(cs[0].getChunkx(), cs[0].getChunkz() - 1);
+			if(css1 == null || css2 == null || css3 == null || css4 == null) continue;
 			if(cs[0].getChunkx() != 0 && cs[0].getChunkz() != 0) {
 				if(css1 == null || css2 == null || css3 == null || css4 == null) continue;
 			}else {
@@ -374,7 +376,6 @@ public class WorldMesher implements Runnable {
 			if(indx >= meshers.length) break;
 		}
 		for(Future<?> f:futures) f.get();
-		activeMeshers = indx;
 		
 		prepareKeySet();
 		for(Vector3i vi:keySetCache) {
@@ -383,6 +384,7 @@ public class WorldMesher implements Runnable {
 			}
 		}
 		
+		startTime = System.currentTimeMillis();
 		hasUpdated = false;
 		
 		if(debug && faceCount != 0) System.out.println(Integer.toString(faceCount) + " faces in mesh (" + Integer.toString(blockCount) + " blocks)" + ", took " + Long.toString(System.currentTimeMillis() - startTime) + " ms");
@@ -393,9 +395,15 @@ public class WorldMesher implements Runnable {
 		while(!toRemove.isEmpty()) {
 			deleteMesh(toRemove.remove(toRemove.size() - 1));
 		}
+		if(pool.getActiveCount() != 0) {
+			if(System.currentTimeMillis() - startTime >= 5000) System.err.println("Thread stuck!");
+			return;
+		}
 		
-		for(int i = 0; i < activeMeshers; i++) {
+		for(int i = 0; i < meshers.length; i++) {
+			if(meshers[i].hasGotten == true) continue;
 			if(meshers[i].ex != null) throw meshers[i].ex;
+			meshers[i].hasGotten = true;
 			ChunkMesh oldMesh = allMeshes.put(new Vector3i(meshers[i].chunkx, meshers[i].chunky, meshers[i].chunkz), meshers[i].getMesh());
 			if(oldMesh != null) loader.deleteMesh(oldMesh);
 			faceCount += meshers[i].faceCount;
@@ -413,6 +421,8 @@ public class WorldMesher implements Runnable {
 		private BlockTexturemap texturemap;
 		private World world;
 		private Exception ex;
+		
+		public volatile boolean hasGotten = true;
 		
 		private float[] vertices = new float[Chunk.CHUNK_WIDTH * Chunk.CHUNK_HEIGHT * Chunk.CHUNK_DEPTH * 6 * topFace.length];
 		private int verticesIndx = 0;
@@ -449,6 +459,7 @@ public class WorldMesher implements Runnable {
 			this.ex = null;
 			try {
 				meshChunk();
+				hasGotten = false;
 			}catch(Exception e) {
 				this.ex = e;
 				return;

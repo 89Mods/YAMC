@@ -11,8 +11,7 @@ public class OctaveNoise {
 	public OctaveNoise(Random rng, int width, int height, int octaves, double att, double cr) {
 		this.noises = new PerlinNoise[octaves];
 		for(int i = 0; i < octaves; i++) {
-			double freq = Math.pow(att, i);
-			this.noises[i] = new PerlinNoise(rng, (int)(width * 1 / freq) + 1, (int)(height * 1 / freq) + 1);
+			this.noises[i] = new PerlinNoise(rng, width, height);
 		}
 		this.att = att;
 		this.cr = cr;
@@ -28,6 +27,8 @@ public class OctaveNoise {
 		double currSc = 1.0;
 		for(int i = 0; i < noises.length; i++) {
 			finalRes += noises[i].sample(x * currFreq, y * currFreq, currSc);
+			//if(finalRes > 1000) return 1000000;
+			//if(finalRes < -1000) return -1000000;
 			max += currSc;
 			currFreq *= att;
 			currSc *= cr;

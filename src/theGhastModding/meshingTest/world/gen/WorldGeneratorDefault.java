@@ -41,9 +41,9 @@ public class WorldGeneratorDefault extends WorldGenerator {
 			mapWidth = mapHeight = settings.noiseMapSize;
 			stoneNoise = new OctaveNoise(rng, mapWidth, mapHeight, settings.stoneOctaves, settings.stoneLac, settings.stonePer);
 			treeNoise = new OctaveNoise(rng, mapWidth, mapHeight, 4, 2.0, 0.5);
-			caveNoise = new OctaveNoise3D(rng, mapWidth, 128, mapHeight, settings.caveOctaves, settings.caveLac, settings.cavePer);
+			caveNoise = new OctaveNoise3D(rng, mapWidth, 12, mapHeight, settings.caveOctaves, settings.caveLac, settings.cavePer);
 			
-			noise1 = new OctaveNoise3D(rng, mapWidth, 128, mapHeight, settings.mountainOctaves, settings.mountainLac, settings.mountainPer);
+			noise1 = new OctaveNoise3D(rng, mapWidth, 12, mapHeight, settings.mountainOctaves, settings.mountainLac, settings.mountainPer);
 		}
 	}
 	
@@ -59,6 +59,7 @@ public class WorldGeneratorDefault extends WorldGenerator {
 			for(int j = 0; j < Chunk.CHUNK_DEPTH; j++) {
 				int dirtDiff = rng.nextInt(3);
 				int height = 57 + (int)Math.abs(stoneNoise.sample((x + i) / settings.scaleX, (z + j) / settings.scaleZ, settings.heightStretch));
+				if(height < 0) height = Integer.MAX_VALUE - 2;
 				int dirtHeight = height - 1 - dirtDiff;
 				int grassHeight = height + 1;
 				for(int k = 0; k <= grassHeight; k++) {
@@ -75,6 +76,7 @@ public class WorldGeneratorDefault extends WorldGenerator {
 				}
 				int origHeight = height - 1;
 				height = 58 + (int)Math.abs(stoneNoise.sample((x + i) / (settings.scaleX * 2.2), (z + j) / (settings.scaleZ * 2.2), settings.mountainStretch));
+				if(height < 0) height = Integer.MAX_VALUE - 1;
 				dirtHeight = height - 1 - dirtDiff;
 				grassHeight = height + 1;
 				int topblockY = 0;
@@ -192,11 +194,12 @@ public class WorldGeneratorDefault extends WorldGenerator {
 	@Override
 	public void decorate(int chunkx, int chunkz) {
 		WorldGenTree tree = new WorldGenTree();
-		rng.setSeed(seed * ((chunkx + 1) * Short.MAX_VALUE + chunkz * Integer.MAX_VALUE));
+		long newseed = seed * ((chunkx + 1) * Short.MAX_VALUE + chunkz * Integer.MAX_VALUE);
+		((RanMT)rng.getRNG()).setSeed(new int[] {(int)newseed, (int)(newseed >> 32), chunkx * Short.MAX_VALUE, chunkz * Short.MIN_VALUE, chunkx * Chunk.CHUNK_WIDTH, chunkz * Chunk.CHUNK_DEPTH});
 		
 		for(int i = 0; i < settings.treeTries; i++) {
 			int x = chunkx * Chunk.CHUNK_WIDTH + rng.nextInt(16);
-			int y = 57 + rng.nextInt(42);
+			int y = 50 + rng.nextInt(47);
 			int z = chunkz * Chunk.CHUNK_WIDTH + rng.nextInt(16);
 			double spawnChance = treeNoise.sample(20000000 - x, 20000000 - z, 2.0) + 0.1;
 			if(rng.nextDouble() < spawnChance) continue;
@@ -204,11 +207,12 @@ public class WorldGeneratorDefault extends WorldGenerator {
 			tree.generate(world, x, y, z, rng);
 		}
 		
+		generateOre(chunkx, chunkz, settings.dirtTries, 33, 0, 256, Block.dirt);
 		generateOre(chunkx, chunkz, settings.coalTries, 17, 0, 128, Block.oreCoal);
-		generateOre(chunkx, chunkz, settings.ironTries, 9, 0, 76, Block.oreIron);
+		generateOre(chunkx, chunkz, settings.ironTries, 9, 0, 64, Block.oreIron);
 		generateOre(chunkx, chunkz, settings.goldTries, 9, 0, 32, Block.oreGold);
 		//Redstone - tries: 8, vein size: 8, min height: 0, max height: 16
-		generateOre(chunkx, chunkz, settings.redstoneTries, 8, 0, 24, Block.oreRedstone);
+		generateOre(chunkx, chunkz, settings.redstoneTries, 8, 0, 16, Block.oreRedstone);
 		generateOre(chunkx, chunkz, settings.diamondTries, 8, 0, 16, Block.oreDiamond);
 		
 		//Cause all sand to fall

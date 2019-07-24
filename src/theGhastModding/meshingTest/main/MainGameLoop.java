@@ -27,11 +27,14 @@ import theGhastModding.meshingTest.renderer.TextMasterRenderer;
 import theGhastModding.meshingTest.resources.BasicFonts;
 import theGhastModding.meshingTest.resources.Loader;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
+import theGhastModding.meshingTest.sound.SoundEngine;
 import theGhastModding.meshingTest.text.GUIText;
 import theGhastModding.meshingTest.util.FileChannelOutputStream;
+import theGhastModding.meshingTest.world.Chunk;
 import theGhastModding.meshingTest.world.World;
 import theGhastModding.meshingTest.world.WorldMesher;
 import theGhastModding.meshingTest.world.gen.WorldGeneratorDefault;
+import theGhastModding.meshingTest.world.gen.WorldGeneratorMaze;
 
 public class MainGameLoop {
 	
@@ -42,9 +45,9 @@ public class MainGameLoop {
 	//TODO: same for this
 	public static boolean cursorGrabbed = true;
 	
-	private int spawnx,spawny;
+	private double spawnx,spawny;
 	
-	public MainGameLoop(long window, int spawnx, int spawny){
+	public MainGameLoop(long window, double spawnx, double spawny){
 		try {
 			this.window = window;
 			this.spawnx = spawnx;
@@ -77,20 +80,23 @@ public class MainGameLoop {
 		GuiRenderer guiRenderer = null;
 		BasicFonts basicFonts = null;
 		BlockTexturemap texturemap = null;
+		SoundEngine sound = null;
 		Random rng = new Random();
 		GuiTexture loadingScreen = null;
 		try {
 			loader = new Loader();
-			world = new World(256, 128, 256);
+			world = new World(256, 256, 256);
 			worldThread = new Thread(world);
 			renderer = new BlocksRenderer(window);
 			textRenderer = new TextMasterRenderer(loader);
 			guiRenderer = new GuiRenderer(loader);
 			basicFonts = new BasicFonts(loader, window);
+			sound = new SoundEngine();
+			sound.registerSource(new File("res/buzz_mono.wav"), "buzz");
 			
 			try {
 				texturemap = new BlockTexturemap("res/map_placeholder.png", loader, 256, 256, 32);
-				loadingScreen = new GuiTexture(loader.loadTextureFromFile("res/GUI/menubg_placeholder.png"), new Vector2f(0, 0), new Vector2f(1f, 1f));
+				loadingScreen = new GuiTexture(loader.loadTextureFromFile("res/GUI/menubg_mc.png"), new Vector2f(0, 0), new Vector2f(1f, 1f));
 			} catch(Exception e) {
 				JOptionPane.showMessageDialog(null, "Error loading textures: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				e.printStackTrace();
@@ -113,6 +119,8 @@ public class MainGameLoop {
 		progressText.setStyle(GUIText.BOLD);
 		
 		try {
+			Camera camera = new Camera(window, world);
+			
 			textRenderer.loadText(text);
 			textRenderer.loadText(progressText);
 			guiRenderer.addGui(loadingScreen);
@@ -122,9 +130,18 @@ public class MainGameLoop {
 			textRenderer.render();
 			GLFW.glfwSwapBuffers(window);
 			
+			camera.getPosition().x = 50;
+			camera.getPosition().y = world.getHeight()*5;
+			camera.getPosition().z = 50;
+			sound.update(camera);
+			camera.loadState();
+			
 			world.loadWorldData();
 			world.setWorldGen(new WorldGeneratorDefault(world));
-			world.startGenerateSpawnChunks();
+			//world.setWorldGen(new WorldGeneratorMaze(world));
+			//((WorldGeneratorMaze)world.getWorldGen()).roomcnt = 0;
+			boolean newWorld = camera.getPosition().x == -1;
+			world.startGenerateSpawnChunks(newWorld ? world.getChunkWidth() / 2 : (int)camera.getPosition().x / Chunk.CHUNK_WIDTH, newWorld ? world.getChunkHeight() / 2 : (int)camera.getPosition().z / Chunk.CHUNK_DEPTH);
 			worldThread.start();
 			
 			Dimension d = getWindowSize(window);
@@ -133,7 +150,6 @@ public class MainGameLoop {
 			int counter = 0;
 			double frameTime = 1000000000D / 60D;
 			long frameTimer = System.nanoTime();
-			Camera camera = new Camera(window, world);
 			int counter2 = 0;
 			while(!GLFW.glfwWindowShouldClose(window)){
 				if(System.nanoTime() - frameTimer >= frameTime){
@@ -158,6 +174,7 @@ public class MainGameLoop {
 						mesher.updateMeshesNow();
 						mesher.updateRendererMeshes();
 						mesher.startMeshingThread();
+						//SoundEngine.current.playSound("buzz", new Vector3f(50, 7, 50), true);
 					}
 					
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_ESCAPE) == GL11.GL_TRUE){
@@ -172,9 +189,9 @@ public class MainGameLoop {
 						camera.getPosition().z = 32;
 					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) == GL11.GL_TRUE){
-						camera.getPosition().x = spawnx;
+						camera.getPosition().x = (float)spawnx;
 						camera.getPosition().y = world.getHeight() + 1;
-						camera.getPosition().z = spawny;
+						camera.getPosition().z = (float)spawny;
 					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_T) == GL11.GL_TRUE){
 						camera.getPosition().y = world.getHeight() + 1;
@@ -201,6 +218,7 @@ public class MainGameLoop {
 					}
 					
 					camera.update();
+					sound.update(camera);
 					mesher.updateRendererMeshes();
 					GLFW.glfwPollEvents();
 					renderer.render(camera, mesher, texturemap);
@@ -255,6 +273,7 @@ public class MainGameLoop {
 			loader.cleanUp();
 			renderer.cleanUp();
 			textRenderer.cleanUp();
+			sound.cleanUp();
 			GLFW.glfwTerminate();
 			GL.destroy();
 		} catch(Exception e){

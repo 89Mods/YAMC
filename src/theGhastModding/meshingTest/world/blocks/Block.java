@@ -36,6 +36,9 @@ public class Block {
 	public static final Block planks;
 	public static final Block bricks;
 	public static final Block tnt;
+	public static final Block wool;
+	public static final Block lamp;
+	public static final Block c1,c2,c3;
 	
 	static {
 		air = new Block(0,0) {
@@ -76,6 +79,11 @@ public class Block {
 		planks = new Block(17, 29);
 		bricks = new Block(18, 32);
 		tnt = new BlockTNT();
+		wool = new Block(20, 40/*44*/);
+		lamp = new Block(21, 41).setLuminoscity(15);
+		c1 = new Block(22, 42);
+		c2 = new Block(23, 43);
+		c3 = new Block(24, 45);
 	}
 	
 	private int id;

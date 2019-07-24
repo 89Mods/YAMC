@@ -1,13 +1,12 @@
 package theGhastModding.meshingTest.main;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-
-import com.sun.prism.paint.Color;
 
 import edu.cornell.lassp.houle.RngPack.Ranecu;
 import theGhastModding.meshingTest.util.BetterRandom;
@@ -46,7 +45,7 @@ public class CaveTest {
 					for(int j = 0; j < depth; j++) {
 						int col;
 						
-						if(!map[i][k][j]) col = Color.BLUE.getIntArgbPre();
+						if(!map[i][k][j]) col = Color.BLUE.getRGB();
 						else col = 0x00909090;
 						
 						for(int a = 0; a < 2; a++) {

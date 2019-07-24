@@ -11,8 +11,7 @@ public class OctaveNoise3D {
 	public OctaveNoise3D(Random rng, int width, int height, int depth, int octaves, double att, double cr) {
 		this.noises = new PerlinNoise3D[octaves];
 		for(int i = 0; i < octaves; i++) {
-			double freq = Math.pow(att, i);
-			this.noises[i] = new PerlinNoise3D(rng, (int)(width * 1 / freq) + 1, (int)(height * 1 / freq) + 1, (int)(depth * 1 / freq) + 1);
+			this.noises[i] = new PerlinNoise3D(rng, width, height, depth);
 		}
 		this.att = att;
 		this.cr = cr;

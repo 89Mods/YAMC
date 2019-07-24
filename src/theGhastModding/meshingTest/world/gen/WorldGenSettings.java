@@ -29,6 +29,7 @@ public class WorldGenSettings {
 	public int goldTries = 2;
 	public int redstoneTries = 8;
 	public int diamondTries = 1;
+	public int dirtTries = 10;
 	public double caveStretchX = 25;
 	public double caveStretchY = 25;
 	public double caveStretchZ = 25;
@@ -64,6 +65,7 @@ public class WorldGenSettings {
 			goldTries = readInt(br.readLine());
 			redstoneTries = readInt(br.readLine());
 			diamondTries = readInt(br.readLine());
+			dirtTries = readInt(br.readLine());
 			caveStretchX = readDouble(br.readLine());
 			caveStretchY = readDouble(br.readLine());
 			caveStretchZ = readDouble(br.readLine());

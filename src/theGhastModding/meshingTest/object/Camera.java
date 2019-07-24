@@ -268,7 +268,7 @@ public class Camera {
 	}
 	
 	private boolean released = true;
-	private final int maxblock = 19;
+	private final int maxblock = 21;
 	
 	private void checkInputs(){
 		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GL11.GL_TRUE){
@@ -303,6 +303,8 @@ public class Camera {
 		}else {
 			released = true;
 		}
+		
+		
 	}
 	
 	public void saveState() throws Exception {

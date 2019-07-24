@@ -23,6 +23,6 @@ void main(void){
 	
 	gl_Position = projectionMatrix * viewMatrix * worldPosition;
 	pass_textureCoords = textureCoords;
-	pass_lightLevel = light;
+	pass_lightLevel = clamp(light, 2.0/15.0, 1.1);
 	
 }

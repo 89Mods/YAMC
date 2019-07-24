@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 public class MeshingTest {
 	
 	public static final String NAME = "TGM's Minecraft Clone";
-	public static final String VERSION = "mcc_5082019";
+	public static final String VERSION = "mcc_6262019";
 	
 	public static void main(String[] args){
 		
@@ -74,6 +74,8 @@ public class MeshingTest {
 				bw.newLine();
 				bw.write(Integer.toString(rng.nextInt(100) + 1));
 				bw.newLine();
+				bw.write(Integer.toString(rng.nextInt(100) + 1));
+				bw.newLine();
 				bw.close();
 			}catch(Exception e) {
 				System.err.println("Error: ");
@@ -83,11 +85,11 @@ public class MeshingTest {
 			System.out.println("Done.");
 			System.exit(0);
 		}
-		int spawnx = 32;
-		int spawny = 32;
+		double spawnx = 32;
+		double spawny = 32;
 		if(args.length > 1) {
-			spawnx = Integer.parseInt(args[0]);
-			spawny = Integer.parseInt(args[1]);
+			spawnx = Double.parseDouble(args[0]);
+			spawny = Double.parseDouble(args[1]);
 		}
 		
 		if(!GLFW.glfwInit()){

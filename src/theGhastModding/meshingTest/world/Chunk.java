@@ -11,18 +11,18 @@ import theGhastModding.meshingTest.util.FileChannelOutputStream;
 
 public class Chunk {
 	
-	private short[][][] blocks;
+	private volatile short[][][] blocks;
 	//Sunlight is stored in the first 4 bits of the lights array, torchlight in the next 4. The remaining 24 bits are reserved.
-	private short[][][] lights;
+	private volatile short[][][] lights;
 	private int chunkx;
 	private int chunky;
 	private int chunkz;
 	
 	private boolean dirty = false;
 	
-	public boolean isGenerated = false;
-	public boolean isDecorated = false;
-	public boolean hasSunlight = false;
+	public volatile boolean isGenerated = false;
+	public volatile boolean isDecorated = false;
+	public volatile boolean hasSunlight = false;
 	
 	public static final int CHUNK_WIDTH = 16;
 	public static final int CHUNK_HEIGHT = 16;

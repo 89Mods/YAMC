@@ -82,6 +82,9 @@ public class BlocksRenderer {
 			GL11.glDrawElements(GL11.GL_TRIANGLES, mesh.getModel().getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
 		}
 		
+		shader.stop();
+		shader.start();
+		
 		shader.clearViewMatrix();
 		shader.loadSelectedPosition(new Vector3f(3000.0f, 3000.0f, 3000.0f));
 		shader.loadTransformationMatrix(Maths.createTransformationMatrix(new Vector3f(1.25f,1.72f,-2f), new Vector3f(25f, 28f, 13f), 0.125f));

@@ -1,0 +1,31 @@
+#version 330 core
+
+in vec3 position;
+
+out vec3 toSunVector;
+out vec3 fromCameraVector;
+out vec3 planetWorldPosition;
+out vec3 originPos;
+
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 transformationMatrix;
+uniform vec3 sunPosition;
+uniform vec3 planetPosition;
+uniform vec3 cameraPosition;
+
+void main(void) {
+	vec4 worldPosition = transformationMatrix * vec4(position, 1.0);
+	//vec4 positionRelativeToCam = viewMatrix * worldPosition;
+	//originPos = worldPosition.xyz;
+	//originPos = (transformationMatrix * vec4(cameraPosition, 1.0)).xyz;
+	originPos = cameraPosition;
+	
+	gl_Position = projectionMatrix * viewMatrix * worldPosition;
+	
+	planetWorldPosition = (1 * vec4(planetPosition, 1.0)).xyz;
+	
+	toSunVector = normalize(sunPosition - worldPosition.xyz);
+	//fromCameraVector = -normalize(((inverse(viewMatrix) * vec4(0.0,0.0,0.0,1.0)).xyz - worldPosition.xyz));
+	fromCameraVector = normalize(worldPosition.xyz - originPos);
+}

@@ -8,8 +8,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-import edu.cornell.lassp.houle.RngPack.Ranecu;
-import theGhastModding.meshingTest.util.BetterRandom;
+import edu.cornell.lassp.houle.RngPack.RanMT;
 
 public class CaveTest {
 	
@@ -24,7 +23,7 @@ public class CaveTest {
 		try {
 			
 			double aliveChance = 0.4;
-			Random rng = new BetterRandom(new Ranecu(System.currentTimeMillis()));
+			Random rng = new RanMT();
 			
 			map = new boolean[width][height][depth];
 			for(int i = 0; i < width; i++) {

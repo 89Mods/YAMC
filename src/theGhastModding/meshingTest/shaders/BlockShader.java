@@ -15,6 +15,8 @@ public class BlockShader extends ShaderProgram {
 	private int location_viewMatrix;
 	private int location_transformationMatrix;
 	private int location_selectedPosition;
+	private int location_sunlightStrength;;
+	private int location_sunColor;
 	
 	public BlockShader() throws Exception {
 		super(VERTEX_FILE, FRAGMENT_FILE);
@@ -34,6 +36,8 @@ public class BlockShader extends ShaderProgram {
 		location_viewMatrix = super.getUniformLocation("viewMatrix");
 		location_transformationMatrix = super.getUniformLocation("transformationMatrix");
 		location_selectedPosition = super.getUniformLocation("selectedPosition");
+		location_sunlightStrength = super.getUniformLocation("sunlightStrength");
+		location_sunColor = super.getUniformLocation("sunColor");
 	}
 	
 	public void loadProjectionMatrix(Matrix4f matrix){
@@ -52,8 +56,16 @@ public class BlockShader extends ShaderProgram {
 		super.loadMatrix(location_transformationMatrix, matrix);
 	}
 	
+	public void loadSun(Vector3f sunColor) {
+		super.loadVector(location_sunColor,    sunColor);
+	}
+	
 	public void loadSelectedPosition(Vector3f pos) {
 		super.loadVector(location_selectedPosition, pos);
+	}
+	
+	public void loadSunlightStrength(float sunlightStrength) {
+		super.loadFloat(location_sunlightStrength, sunlightStrength);
 	}
 	
 }

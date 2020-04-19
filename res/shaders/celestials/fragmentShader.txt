@@ -1,0 +1,29 @@
+#version 330 core
+
+in vec2 pass_textureCoords;
+in vec3 surfaceNormal;
+in vec3 toSunVector;
+
+out vec4 out_Color;
+
+uniform sampler2D textureSampler;
+uniform vec3 sunColor;
+
+void main(void){
+	
+	vec4 textureColor = texture(textureSampler, pass_textureCoords);
+	if(textureColor.a < 0.5){
+		discard;
+	}
+	
+	vec3 unitNormal = normalize(surfaceNormal);
+	vec3 unitLightVector = normalize(toSunVector);
+	
+	float nDot1 = dot(unitNormal, unitLightVector);
+	float brightness = max(nDot1, 0.0);
+	brightness = min(1.0, brightness + 0.1);
+	vec3 diffuse = brightness * sunColor;
+	
+	out_Color = vec4(diffuse, 1.0) * textureColor;
+	
+}

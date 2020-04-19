@@ -58,7 +58,7 @@ public class Block {
 		};
 		iron = new Block(5,10).setLuminoscity(10);
 		gold = new Block(6,11);
-		leaves = new BlockLeaves().setOpacity(3);
+		leaves = new BlockLeaves().setOpacity(2);
 		log = new Block(8,17) {
 			@Override
 			public int getTexture(int face) {

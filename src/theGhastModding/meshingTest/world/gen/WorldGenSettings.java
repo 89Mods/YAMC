@@ -7,32 +7,32 @@ import java.io.FileReader;
 public class WorldGenSettings {
 	
 	public int seaLevel = 63;
-	public double heightStretch = 160;
-	public double mountainStretch = 200;
+	public double heightStretch = 128;
+	public double mountainStretch = 225;
 	public double scaleX = 120;
 	public double scaleY = 80;
 	public double scaleZ = 120;
-	public int noiseMapSize = 350;
-	public int stoneOctaves = 16;
+	public int noiseMapSize = 32;
+	public int stoneOctaves = 7;
 	public double stoneLac = 2;
 	public double stonePer = 0.5;
-	public int caveOctaves = 8;
+	public int caveOctaves = 3;
 	public double caveLac = 2;
 	public double cavePer = 0.5;
-	public int mountainOctaves = 16;
+	public int mountainOctaves = 11;
 	public double mountainLac = 2;
 	public double mountainPer = 0.5;
-	public double caveThreshold = 0.55;
-	public int treeTries = 100;
+	public double caveThreshold = 0.11;
+	public int treeTries = 300;
 	public int coalTries = 20;
 	public int ironTries = 20;
 	public int goldTries = 2;
 	public int redstoneTries = 8;
 	public int diamondTries = 1;
 	public int dirtTries = 10;
-	public double caveStretchX = 25;
-	public double caveStretchY = 25;
-	public double caveStretchZ = 25;
+	public double caveStretchX = 35;
+	public double caveStretchY = 35;
+	public double caveStretchZ = 35;
 	
 	public WorldGenSettings() {
 		

@@ -7,7 +7,6 @@ import java.util.Random;
 import java.util.Stack;
 
 import edu.cornell.lassp.houle.RngPack.RanMT;
-import theGhastModding.meshingTest.util.BetterRandom;
 import theGhastModding.meshingTest.world.Chunk;
 import theGhastModding.meshingTest.world.World;
 import theGhastModding.meshingTest.world.blocks.Block;
@@ -48,7 +47,7 @@ public class WorldGeneratorMaze extends WorldGenerator {
 		this.mCx = mCx;
 		this.mCy = mCy;
 		long chunkSeed = mCx * 15485867 + mCy * 105883;
-		Random rng = new BetterRandom(new RanMT(new int[] {(int)chunkSeed, (int)(chunkSeed >> 32), (int)this.seed, (int)(this.seed >> 32)}));
+		Random rng = new RanMT(new int[] {(int)chunkSeed, (int)(chunkSeed >> 32), (int)this.seed, (int)(this.seed >> 32)});
 		
 		List<Rectangle> rooms = new ArrayList<Rectangle>();
 		for(int i = 0; i < roomcnt; i++) {

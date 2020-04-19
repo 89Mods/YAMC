@@ -1,9 +1,7 @@
 #version 330 core
 
 in vec2 pass_textureCoords;
-in float pass_lightLevel;
-
-in vec4 gl_Color;
+in vec3 pass_lightLevel;
 
 out vec4 out_Color;
 in float isSelected;
@@ -16,12 +14,12 @@ void main(void){
 	if(textureColor.a < 0.5){
 		discard;
 	}
-	float ll = pass_lightLevel;
-	if(isSelected == 1.0) ll = 1.25;
-	textureColor.r *= ll;
-	textureColor.g *= ll;
-	textureColor.b *= ll,
+	if(isSelected == 1.0){
+		out_Color = vec4(textureColor.rgb * 1.25, 1.0);
+		return;
+	}
+	
+	textureColor.rgb *= pass_lightLevel;
 	
 	out_Color = textureColor;
-	
 }

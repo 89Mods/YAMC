@@ -27,7 +27,7 @@ public class PerlinNoise {
 		return 3 * (x * x) - 2 * (x * x * x);
 	}
 	
-	private double noise(double x, double y) {
+	public double sample(double x, double y) {
 		
 		int nodex = (int)x;
 		int nodey = (int)y;
@@ -53,14 +53,6 @@ public class PerlinNoise {
 		double ix1 = lerp(dot2, dot3, wx);
 		
 		return lerp(ix0, ix1, wy);
-	}
-	
-	public double sample(double x, double y, double scale) {
-		return noise(x, y) * scale;
-	}
-	
-	public double sampleNorm(double x, double y, double scale) {
-		return (noise(x, y) + 1.0) / 2.0 * scale;
 	}
 	
 }

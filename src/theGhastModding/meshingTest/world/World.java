@@ -12,14 +12,13 @@ import java.util.Map;
 import java.util.Random;
 import edu.cornell.lassp.houle.RngPack.RanMT;
 import theGhastModding.meshingTest.maths.Vector2i;
-import theGhastModding.meshingTest.util.BetterRandom;
 import theGhastModding.meshingTest.world.blocks.Block;
 import theGhastModding.meshingTest.world.gen.WorldGenerator;
 import theGhastModding.meshingTest.world.gen.WorldGeneratorDefault;
 
 public class World implements Runnable {
 	
-	private volatile Map<Vector2i, Chunk[]> allChunks;
+	private volatile Map<Long, Chunk[]> allChunks;
 	private int width;
 	private int height;
 	private int depth;
@@ -34,9 +33,14 @@ public class World implements Runnable {
 	
 	private LightEngine lightEngine;
 	
+	private volatile int timeOfDay = 18000;
+	private volatile long worldTime = 18000;
+	
 	public static final int DEFAULT_WIDTH = 128;
 	public static final int DEFAULT_HEIGHT = 128;
 	public static final int DEFAULT_DEPTH = 128;
+	
+	private volatile float sunlightStrength;
 	
 	public World(int width, int height, int depth) {
 		this.width = width - (width % Chunk.CHUNK_WIDTH);
@@ -45,7 +49,7 @@ public class World implements Runnable {
 		this.chunkWidth = this.width / Chunk.CHUNK_WIDTH;
 		this.chunkHeight = this.height / Chunk.CHUNK_HEIGHT;
 		this.chunkDepth = this.depth / Chunk.CHUNK_DEPTH;
-		this.allChunks = new HashMap<Vector2i, Chunk[]>();
+		this.allChunks = new HashMap<Long, Chunk[]>();
 		/*for(int i = 0; i < chunkWidth; i++) {
 			for(int k = 0; k < chunkDepth; k++) {
 				Chunk[] masterChunk = new Chunk[chunkHeight];
@@ -55,7 +59,7 @@ public class World implements Runnable {
 				this.allChunks.put(new Vector2i(i, k), masterChunk);
 			}
 		}*/
-		interactionRNG = new BetterRandom(new RanMT(worldSeed));
+		interactionRNG = new RanMT(worldSeed);
 		this.lightEngine = new LightEngine(this);
 	}
 	
@@ -131,10 +135,17 @@ public class World implements Runnable {
 		if(x < 0 || y < 0 || z < 0) return 0;
 		Chunk c = getChunkAt(x, y, z);
 		if(c == null) return 0;
-		int sunlight = c.getAbsoluteSunlight(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz()) - (15 - sunlightLevel);
+		int sunlight = c.getAbsoluteSunlight(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz()) - (15 - (int)Math.round(sunlightStrength));
 		if(sunlight < 0) sunlight = 0;
 		int torchlight = c.getTorchlight(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz());
 		return Math.max(sunlight, torchlight);
+	}
+	
+	public short getCompoundLightLevel(int x, int y, int z) {
+		if(x < 0 || y < 0 || z < 0) return 0;
+		Chunk c = getChunkAt(x, y, z);
+		if(c == null) return 0;
+		return c.getCompoundLight(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz());
 	}
 	
 	public int getTorchLightLevel(int x, int y, int z) {
@@ -162,8 +173,8 @@ public class World implements Runnable {
 	public int getSunLightLevel(int x, int y, int z) {
 		if(x < 0 || y < 0 || z < 0) return 0;
 		Chunk c = getChunkAt(x, y, z);
-		if(c == null) return sunlightLevel;
-		return c.getAbsoluteSunlight(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz()) - (15 - sunlightLevel);
+		if(c == null) return (int)Math.round(sunlightStrength);
+		return c.getAbsoluteSunlight(x - Chunk.CHUNK_WIDTH * c.getChunkx(), y - Chunk.CHUNK_HEIGHT * c.getChunky(), z - Chunk.CHUNK_DEPTH * c.getChunkz()) - (15 - (int)Math.round(sunlightStrength));
 	}
 	
 	public void placeLightSource(int x, int y, int z, int level) {
@@ -172,13 +183,6 @@ public class World implements Runnable {
 	
 	public void removeLightSource(int x, int y, int z, int originalLevel) {
 		lightEngine.removeLight(x, y, z, originalLevel, false);
-	}
-	
-	private int sunlightLevel = 15;
-	
-	public synchronized void setSunlight(int level) {
-		this.sunlightLevel = level;
-		for(Chunk[] cs:allChunks.values()) for(Chunk c:cs) c.markDirty();
 	}
 	
 	public Chunk getChunk(int chunkx, int chunky, int chunkz) {
@@ -194,17 +198,14 @@ public class World implements Runnable {
 		return cs[y / Chunk.CHUNK_HEIGHT];
 	}
 	
-	private Vector2i accessVect = new Vector2i(0, 0);
-	
 	public synchronized Chunk[] getMasterChunk(int x, int z) {
-		accessVect.x = x; //Looks a bit stupid, but it's the only way to prevent vector objects from filling up RAM
-		accessVect.y = z;
-		return allChunks.get(accessVect);
+		return allChunks.get(((x & 0xFFFFFFFFL) << 32L) + (z & 0xFFFFFFFFL));
 	}
 	
-	public synchronized void addChunk(Chunk[] cs, Vector2i v) {
-		if(allChunks.get(v) == null) {
-			allChunks.put(v, cs);
+	public synchronized void addChunk(Chunk[] cs, int x, int z) {
+		long acc = ((x & 0xFFFFFFFFL) << 32L) + (z & 0xFFFFFFFFL);
+		if(allChunks.get(acc) == null) {
+			allChunks.put(acc, cs);
 		}
 	}
 	
@@ -225,12 +226,12 @@ public class World implements Runnable {
 		return height;
 	}
 	
-	private synchronized Chunk[] deleteChunk(Vector2i v) {
-		return allChunks.remove(v);
+	private synchronized Chunk[] deleteChunk(int x, int z) {
+		return allChunks.remove(((x & 0xFFFFFFFFL) << 32L) + (z & 0xFFFFFFFFL));
 	}
 	
-	private void unloadChunk(Vector2i v) {
-		Chunk[] cs = deleteChunk(v);
+	private void unloadChunk(int x, int z) {
+		Chunk[] cs = deleteChunk(x, z);
 		try {
 			for(int i = 0; i < cs.length; i++) cs[i].save();
 		}catch(Exception e) {
@@ -240,13 +241,13 @@ public class World implements Runnable {
 		}
 	}
 	
-	private Chunk[] loadChunk(Vector2i v) {
-		Chunk[] cs = getMasterChunk(v.x, v.y);
+	private Chunk[] loadChunk(int x, int z) {
+		Chunk[] cs = getMasterChunk(x, z);
 		if(cs != null) return cs;
 		cs = new Chunk[chunkHeight];
 		boolean loaded = true;
 		for(int i = 0; i < chunkHeight; i++) {
-			cs[i] = new Chunk(v.x, i, v.y);
+			cs[i] = new Chunk(x, i, z);
 			if(loaded) {
 				try {
 					loaded = cs[i].load(true);
@@ -257,7 +258,7 @@ public class World implements Runnable {
 				}
 			}
 		}
-		addChunk(cs, v);
+		addChunk(cs, x, z);
 		return cs;
 	}
 	
@@ -308,7 +309,7 @@ public class World implements Runnable {
 					for(int i = 0; i < chunkHeight; i++) cs[i] = new Chunk(coords.x, i, coords.y);
 					addChunk(cs, coords);
 				}*/
-				Chunk[] cs = loadChunk(coords);
+				Chunk[] cs = loadChunk(coords.x, coords.y);
 				toDecorate.add(coords);
 				total++;
 				progress = (double)total / (double)origLength * 100.0D;
@@ -334,7 +335,7 @@ public class World implements Runnable {
 							for(int i2 = 0; i2 < chunkHeight; i2++) cs[i2] = new Chunk(coords2.x, i2, coords2.y);
 							addChunk(cs, coords2);
 						}*/
-						Chunk[] cs = loadChunk(coords);
+						Chunk[] cs = loadChunk(coords.x, coords.y);
 						if(!cs[0].isGenerated) {
 							generator.generateChunks(cs, coords2.x, coords2.y);
 							for(int i2 = 0; i2 < chunkHeight; i2++) cs[i2].isGenerated = true;
@@ -460,7 +461,7 @@ public class World implements Runnable {
 			for(Vector2i vi:parsedChunks) {
 				generator.parseTorchLight(vi.x, vi.y);
 			}
-			sunlightLevel = 15;
+			sunlightStrength = 15.0f;
 			generatingSpawn = false;
 		}
 		
@@ -530,12 +531,16 @@ public class World implements Runnable {
 							if(c[0].isDecorated) toBeRemoved.add(new Vector2i(c[0].getChunkx(), c[0].getChunkz()));
 						}
 					}
-					for(Vector2i vi:toBeRemoved) unloadChunk(vi);
+					for(Vector2i vi:toBeRemoved) unloadChunk(vi.x, vi.y);
+					
+					//Chunk[] tm = getMasterChunk(playerx / 16, playery / 16);
+					//if(tm != null) System.out.println(tm[0].isDecorated + "," + tm[0].isDirty() + "," + tm[0].isGenerated);
+					//else System.out.println("null");
 					
 					int cnt = 0;
 					for(int i = minx - 1; i <= maxx + 1; i++) {
 						for(int j = minz - 1; j <= maxz + 1; j++) {
-							if(i > 0 && j > 0 && (getMasterChunk(i, j) == null || getMasterChunk(i, j)[0].isDecorated == false)) {
+							if(i > 0 && j > 0 && (getMasterChunk(i, j) == null)) {
 								toGenerate.add(new Vector2i(i, j));
 								cnt++;
 							}
@@ -552,6 +557,7 @@ public class World implements Runnable {
 				if(System.currentTimeMillis() - startTime >= tickTime) {
 					startTime = System.currentTimeMillis();
 					doTicks();
+					increaseTime(1L);
 					tickCntr++;
 				}
 			}
@@ -659,6 +665,28 @@ public class World implements Runnable {
 	
 	public int getChunkDepth() {
 		return chunkDepth;
+	}
+	
+	public int getTimeOfDay() {
+		return this.timeOfDay;
+	}
+	
+	public synchronized void increaseTime(long by) {
+		worldTime += by;
+		timeOfDay += by;
+		timeOfDay %= 24000L;
+	}
+	
+	public float getSunlightStrength() {
+		return this.sunlightStrength;
+	}
+	
+	public void setSunlightStrength(float sunlightStrength) {
+		this.sunlightStrength = sunlightStrength;
+	}
+	
+	public long getWorldTime() {
+		return this.worldTime;
 	}
 	
 }

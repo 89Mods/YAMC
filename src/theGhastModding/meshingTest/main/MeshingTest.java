@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 public class MeshingTest {
 	
 	public static final String NAME = "TGM's Minecraft Clone";
-	public static final String VERSION = "mcc_6262019";
+	public static final String VERSION = "mcc_05192020";
 	
 	public static void main(String[] args){
 		

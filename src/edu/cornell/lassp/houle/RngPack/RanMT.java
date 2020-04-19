@@ -1,6 +1,5 @@
 package edu.cornell.lassp.houle.RngPack;
 import java.util.*;
-import java.io.Serializable;
 
 //
 // RngPack 1.1a by Paul Houle
@@ -62,7 +61,7 @@ import java.io.Serializable;
 
 
 @SuppressWarnings("serial")
-public class RanMT extends RandomSeedable implements Serializable {
+public class RanMT extends Random {
 
     private static final int N = 624;
     private static final int M = 397;
@@ -82,8 +81,31 @@ public class RanMT extends RandomSeedable implements Serializable {
     public RanMT() {
 		this.setSeed(new int[] {(int)(System.nanoTime() >> 32), (int)System.currentTimeMillis()});
     }
-
+    
+    public RanMT seedCompletely() {
+    	/*try {
+    		FileInputStream fis = new FileInputStream("/dev/random");
+    		int[] seed = new int[624];
+    		byte[] intBuff = new byte[4];
+    		for(int i = 0; i < 624; i++) {
+    			fis.read(intBuff);
+    			seed[i] = (intBuff[0] & 0xFF) | ((intBuff[1] << 8) & 0xFF) | ((intBuff[2] << 16) & 0xFF) | ((intBuff[3] << 24) & 0xFF);
+    		}
+    		setSeed(seed);
+    		fis.close();
+    	}catch(Exception e) {
+    		e.printStackTrace();
+    	}*/
+    	int[] seed = new int[624];
+    	for(int i = 0; i < 624; i++) {
+    		seed[i] = (int)(Math.random() * Integer.MAX_VALUE * 2.0 - Integer.MAX_VALUE);
+    	}
+    	setSeed(seed);
+    	return this;
+    }
+    
     public RanMT(long seed) {
+    	super(seed);
     	this.setSeed(new int[] {(int)(seed >> 32), (int)seed});
     }
 
@@ -105,6 +127,7 @@ public class RanMT extends RandomSeedable implements Serializable {
 
     public void setSeed(long seed)
     {
+    super.setSeed(seed);
 	mt = new int[N];
 	
 	mag01 = new int[2];
@@ -124,7 +147,13 @@ public class RanMT extends RandomSeedable implements Serializable {
 		/* for >32 bit machines */
             }
     }
-
+    
+    private int[] longSeed = null;
+    
+    public int[] getLongSeed() {
+    	return this.longSeed;
+    }
+    
     /**
      * An alternative, more complete, method of seeding the
      * pseudo random number generator.  array must be an 
@@ -135,6 +164,7 @@ public class RanMT extends RandomSeedable implements Serializable {
     public void setSeed(final int[] array) {
         int i, j, k;
         setSeed(19650218);
+        this.longSeed = array;
         i=1; j=0;
         k = (N>array.length ? N : array.length);
         for (; k!=0; k--) {
@@ -155,62 +185,68 @@ public class RanMT extends RandomSeedable implements Serializable {
 	}
         mt[0] = 0x80000000; /* MSB is 1; assuring non-zero initial array */ 
     }
-
-
-
-
-    public final double raw() {
-	int y;
-	int z;
-	
-	if (mti >= N) {   // generate N words at one time
-	    
-	    int kk;
-	    
-	    for (kk = 0; kk < N - M; kk++) {
-		y = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
-		mt[kk] = mt[kk+M] ^ (y >>> 1) ^ mag01[y & 0x1];
-	    }
-	    for (; kk < N-1; kk++) {
-		y = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
-		mt[kk] = mt[kk+(M-N)] ^ (y >>> 1) ^ mag01[y & 0x1];
-	    }
-	    y = (mt[N-1] & UPPER_MASK) | (mt[0] & LOWER_MASK);
-	    mt[N-1] = mt[M-1] ^ (y >>> 1) ^ mag01[y & 0x1];
-	    
-	    mti = 0;
-	}
-  
-	y = mt[mti++];
-	y ^= y >>> 11;                          // TEMPERING_SHIFT_U(y)
-	y ^= (y << 7) & TEMPERING_MASK_B;       // TEMPERING_SHIFT_S(y)
-	y ^= (y << 15) & TEMPERING_MASK_C;      // TEMPERING_SHIFT_T(y)
-	y ^= (y >>> 18);                        // TEMPERING_SHIFT_L(y)
-	
-	if (mti >= N) {  // generate N words at one time
-	    int kk;
-	    
-	    for (kk = 0; kk < N - M; kk++) {
-		z = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
-		mt[kk] = mt[kk+M] ^ (z >>> 1) ^ mag01[z & 0x1];
-	    }
-	    for (; kk < N-1; kk++) {
-		z = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
-		mt[kk] = mt[kk+(M-N)] ^ (z >>> 1) ^ mag01[z & 0x1];
-	    }
-	    z = (mt[N-1] & UPPER_MASK) | (mt[0] & LOWER_MASK);
-	    mt[N-1] = mt[M-1] ^ (z >>> 1) ^ mag01[z & 0x1];
-	    
-	    mti = 0;
-	}
-	
-	z = mt[mti++];
-	z ^= z >>> 11;                          // TEMPERING_SHIFT_U(z)
-	z ^= (z << 7) & TEMPERING_MASK_B;       // TEMPERING_SHIFT_S(z)
-	z ^= (z << 15) & TEMPERING_MASK_C;      // TEMPERING_SHIFT_T(z)
-	z ^= (z >>> 18);                        // TEMPERING_SHIFT_L(z)
-	
+    
+    @Override
+    public int next(int bits) {
+    	int y;
+    	int z;
+    	
+    	if (mti >= N) {   // generate N words at one time
+    	    
+    	    int kk;
+    	    
+    	    for (kk = 0; kk < N - M; kk++) {
+    		y = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
+    		mt[kk] = mt[kk+M] ^ (y >>> 1) ^ mag01[y & 0x1];
+    	    }
+    	    for (; kk < N-1; kk++) {
+    		y = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
+    		mt[kk] = mt[kk+(M-N)] ^ (y >>> 1) ^ mag01[y & 0x1];
+    	    }
+    	    y = (mt[N-1] & UPPER_MASK) | (mt[0] & LOWER_MASK);
+    	    mt[N-1] = mt[M-1] ^ (y >>> 1) ^ mag01[y & 0x1];
+    	    
+    	    mti = 0;
+    	}
+      
+    	y = mt[mti++];
+    	y ^= y >>> 11;                          // TEMPERING_SHIFT_U(y)
+    	y ^= (y << 7) & TEMPERING_MASK_B;       // TEMPERING_SHIFT_S(y)
+    	y ^= (y << 15) & TEMPERING_MASK_C;      // TEMPERING_SHIFT_T(y)
+    	y ^= (y >>> 18);                        // TEMPERING_SHIFT_L(y)
+    	
+    	if(bits <= 32) {
+    		return y >>> (32 - bits);
+    	}
+    	
+    	if (mti >= N) {  // generate N words at one time
+    	    int kk;
+    	    
+    	    for (kk = 0; kk < N - M; kk++) {
+    		z = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
+    		mt[kk] = mt[kk+M] ^ (z >>> 1) ^ mag01[z & 0x1];
+    	    }
+    	    for (; kk < N-1; kk++) {
+    		z = (mt[kk] & UPPER_MASK) | (mt[kk+1] & LOWER_MASK);
+    		mt[kk] = mt[kk+(M-N)] ^ (z >>> 1) ^ mag01[z & 0x1];
+    	    }
+    	    z = (mt[N-1] & UPPER_MASK) | (mt[0] & LOWER_MASK);
+    	    mt[N-1] = mt[M-1] ^ (z >>> 1) ^ mag01[z & 0x1];
+    	    
+    	    mti = 0;
+    	}
+    	
+    	z = mt[mti++];
+    	z ^= z >>> 11;                          // TEMPERING_SHIFT_U(z)
+    	z ^= (z << 7) & TEMPERING_MASK_B;       // TEMPERING_SHIFT_S(z)
+    	z ^= (z << 15) & TEMPERING_MASK_C;      // TEMPERING_SHIFT_T(z)
+    	z ^= (z >>> 18);                        // TEMPERING_SHIFT_L(z)
+    	
+    	long res = (((long)y & 0xFFFFFFFFL) << 32L) + ((long)z & 0xFFFFFFFFL);
+    	
+    	return (int)(res >>> (long)(48 - bits));
+	//return ((long)y & 0xFFFFFFFF) << 32L + ((long)z & 0xFFFFFFFF);
 	/* derived from nextDouble documentation in jdk 1.2 docs, see top */
-	return ((((long)(y >>> 6)) << 27) + (z >>> 5)) / (double)(1L << 53);
+	//return ((((long)(y >>> 6)) << 27) + (z >>> 5)) / (double)(1L << 53);
     }
 }

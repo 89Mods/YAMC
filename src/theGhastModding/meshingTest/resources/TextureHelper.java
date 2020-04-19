@@ -7,13 +7,11 @@ import javax.imageio.ImageIO;
 
 public class TextureHelper {
 	
-	Loader loader;
-	
-	public TextureHelper(Loader loader){
-		this.loader = loader;
+	private TextureHelper(){
+		
 	}
 	
-	public int createAdvancedCubeTexture(BufferedImage back, BufferedImage front, BufferedImage right, BufferedImage left, BufferedImage top, BufferedImage bottom, int width, int height) throws Exception {
+	public static int createAdvancedCubeTexture(BufferedImage back, BufferedImage front, BufferedImage right, BufferedImage left, BufferedImage top, BufferedImage bottom, int width, int height) throws Exception {
 		if(back.getWidth() != width || front.getWidth() != width || right.getWidth() != width || left.getWidth() != width || top.getWidth() != width || bottom.getWidth() != width) throw new Exception("Invalid image size(s)");
 		if(back.getHeight() != height || front.getHeight() != height || right.getHeight() != height || left.getHeight() != height || top.getHeight() != height || bottom.getHeight() != height) throw new Exception("Invalid image size(s)");
 		BufferedImage fullTexture = new BufferedImage(width * 3, height * 2, BufferedImage.TYPE_INT_RGB);
@@ -27,10 +25,10 @@ public class TextureHelper {
 				fullTexture.setRGB(i + width + width, j + height, bottom.getRGB(i, j));
 			}
 		}
-		return loader.loadTextureFromBufferedImage(fullTexture);
+		return Loader.loadTextureFromBufferedImage(fullTexture);
 	}
 	
-	public int createAdvancedCubeTexture(String back, String front, String right, String left, String top, String bottom, int width, int height) throws Exception {
+	public static int createAdvancedCubeTexture(String back, String front, String right, String left, String top, String bottom, int width, int height) throws Exception {
 		return createAdvancedCubeTexture(ImageIO.read(new File(back)), ImageIO.read(new File(front)), ImageIO.read(new File(right)), ImageIO.read(new File(left)), ImageIO.read(new File(top)), ImageIO.read(new File(bottom)), width, height);
 	}
 	

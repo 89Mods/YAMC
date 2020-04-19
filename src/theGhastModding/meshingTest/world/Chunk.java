@@ -74,6 +74,23 @@ public class Chunk {
 		if(prevlight != lights[x][y][z]) markDirty();
 	}
 	
+	public boolean hasSunlight() {
+		for(int i = 0; i < CHUNK_WIDTH; i++) {
+			for(int j = 0; j < CHUNK_HEIGHT; j++) {
+				for(int k = 0; k < CHUNK_DEPTH; k++) {
+					if((lights[i][j][k] & 0b11110000) != 0) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	public short getCompoundLight(int x, int y, int z) {
+		return lights[x][y][z];
+	}
+	
 	//Convert coordinates to array index
 	/*private int toIndex(int x, int y, int z) {
 		return x * (CHUNK_HEIGHT * CHUNK_DEPTH) + y * CHUNK_DEPTH + z;

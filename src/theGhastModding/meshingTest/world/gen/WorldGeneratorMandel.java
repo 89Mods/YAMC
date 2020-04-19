@@ -44,7 +44,7 @@ public class WorldGeneratorMandel extends WorldGenerator {
 	//gold block, leaves, grass, iron block, glass, log, dirt, ores, stone
 	
 	private final int[] theblocks = {Block.glass.getBlockID(), Block.iron.getBlockID(), Block.gold.getBlockID(), Block.leaves.getBlockID(), Block.log.getBlockID(),
-									 Block.dirt.getBlockID(), Block.oreCoal.getBlockID(), Block.oreIron.getBlockID(), Block.oreGold.getBlockID(), Block.oreDiamond.getBlockID(), Block.stone.getBlockID()};;
+									 Block.dirt.getBlockID(), Block.oreCoal.getBlockID(), Block.oreIron.getBlockID(), Block.oreGold.getBlockID(), Block.oreDiamond.getBlockID(), Block.stone.getBlockID()};
 	
 	@Override
 	public void generateChunks(Chunk[] c, int chunkx, int chunkz) {
@@ -68,10 +68,13 @@ public class WorldGeneratorMandel extends WorldGenerator {
 				}while(xx + yy <= 4 && iteration < maxIters);
 				
 				if(iteration < maxIters) {
-					iteration %= theblocks.length;
+					iteration %= 256;
+					int bcol = iteration / 28;
+					if(bcol > 9) bcol = 9;
 					//iteration++;
 					//if(iteration == Block.bedrock.getBlockID()) iteration++;
-					c[0].setBlock(row, 8, col, theblocks[iteration]);
+					c[0].setBlock(row, 8, col, theblocks[bcol]);
+					
 				}else{
 					c[0].setBlock(row, 8, col, Block.bedrock.getBlockID());
 				}

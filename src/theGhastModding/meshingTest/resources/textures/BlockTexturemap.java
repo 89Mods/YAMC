@@ -14,16 +14,16 @@ public class BlockTexturemap {
 	private int textureBlockDim;
 	private int blocksPerRow;
 	
-	public BlockTexturemap(String texturePath, Loader loader, int textureWidth, int textureHeight, int textureBlockDim) throws Exception {
-		this.textureID = loader.loadTextureFromFile(texturePath);
+	public BlockTexturemap(String texturePath, int textureWidth, int textureHeight, int textureBlockDim) throws Exception {
+		this.textureID = Loader.loadTextureFromFile(texturePath);
 		this.textureWidth = textureWidth;
 		this.textureHeight = textureHeight;
 		this.textureBlockDim = textureBlockDim;
 		this.blocksPerRow = textureWidth / textureBlockDim;
 	}
 	
-	public BlockTexturemap(BufferedImage texture, Loader loader, int textureBlockDim) throws Exception {
-		this.textureID = loader.loadTextureFromBufferedImage(texture);
+	public BlockTexturemap(BufferedImage texture, int textureBlockDim) throws Exception {
+		this.textureID = Loader.loadTextureFromBufferedImage(texture);
 		this.textureWidth = texture.getWidth();
 		this.textureHeight = texture.getHeight();
 		this.textureBlockDim = textureBlockDim;

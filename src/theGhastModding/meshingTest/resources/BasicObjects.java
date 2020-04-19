@@ -5,7 +5,7 @@ public class BasicObjects {
 	public final BaseModel cube;
 	public final BaseModel advancedCube;
 	
-	public BasicObjects(Loader loader) throws Exception {
+	public BasicObjects() throws Exception {
 		float[] vertices = {
 				//Left
 				-0.5f,0f,-0.5f,	
@@ -174,8 +174,8 @@ public class BasicObjects {
 				
 		};
 		
-		cube = loader.loadToVAO(vertices, indices, textureCoords, normals);
-		advancedCube = loader.loadToVAO(vertices, indices, advanvedCubetextureCoords, normals);
+		cube = Loader.loadToVAO(vertices, indices, textureCoords, normals);
+		advancedCube = Loader.loadToVAO(vertices, indices, advanvedCubetextureCoords, normals);
 	}
 	
 }

@@ -20,9 +20,9 @@ public class GuiRenderer {
 	
 	private List<GuiTexture> guis;
 	
-	public GuiRenderer(Loader loader) throws Exception {
+	public GuiRenderer() throws Exception {
 		float[] positions = {-1,1,-1,-1,1,1,1,-1};
-		quad = loader.loadToVAO(positions,2);
+		quad = Loader.loadToVAO(positions,2);
 		shader = new GuiShader();
 		guis = new ArrayList<GuiTexture>();
 	}

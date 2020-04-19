@@ -25,18 +25,20 @@ import theGhastModding.meshingTest.world.ChunkMesh;
 
 public class Loader {
 	
-	private List<Integer> vaos = new ArrayList<Integer>();
-	private List<Integer> vbos = new ArrayList<Integer>();
-	private List<Integer> textures = new ArrayList<Integer>();
+	private static List<Integer> vaos = new ArrayList<Integer>();
+	private static List<Integer> vbos = new ArrayList<Integer>();
+	private static List<Integer> textures = new ArrayList<Integer>();
 	
-	public BaseModel loadToVAO(float[] positions, int dimensions) throws Exception {
+	private Loader() {}
+	
+	public static BaseModel loadToVAO(float[] positions, int dimensions) throws Exception {
 		int vaoID = createVAO();
-		int vboID = this.storeDataInAttributeList(0, dimensions, positions, positions.length);
+		int vboID = storeDataInAttributeList(0, dimensions, positions, positions.length);
 		unbindVAO();
 		return new BaseModel(vaoID, new int[] {vboID}, positions.length / 2);
 	}
 	
-	public void deleteMesh(ChunkMesh oldMesh) {
+	public static void deleteMesh(ChunkMesh oldMesh) {
 		if(oldMesh.getModel() == null) {
 			return;
 		}
@@ -51,7 +53,7 @@ public class Loader {
 		vaos.remove((Integer)vaoID);
 	}
 	
-	public BaseModel loadToVAO(float[] positions, int[] indices, float[] textureCoords, float[] normals) throws Exception {
+	public static BaseModel loadToVAO(float[] positions, int[] indices, float[] textureCoords, float[] normals) throws Exception {
 		if(positions.length % 3 != 0) throw new LoaderException("Invalid vertex count");
 		if(indices.length % 3 != 0) throw new LoaderException("Invalid indices count");
 		if(textureCoords.length % 2 != 0) throw new LoaderException("Invalid texture coordinate count");
@@ -66,7 +68,20 @@ public class Loader {
 		return new BaseModel(vaoID, VBOs, indices.length);
 	}
 	
-	public ChunkMesh loadChunkMesh(float[] positions, int posCnt, int[] indices, int indCnt, float[] textureCoords, int textCnt, float[] normals, int normCnt, float[] lightLevels, int lightCnt) throws Exception {
+	public static BaseModel loadToVAO(float[] positions, int[] indices, float[] normals) throws Exception {
+		if(positions.length % 3 != 0) throw new Exception("Invalid vertex count");
+		if(indices.length % 3 != 0) throw new Exception("Invalid indices count");
+		if(normals.length % 3 != 0) throw new Exception("Invalid normals count");
+		int vaoID = createVAO();
+		bindIndices(indices, indices.length);
+		int[] VBOs = new int[2];
+		VBOs[0] = storeDataInAttributeList(0, 3, positions, positions.length);
+		VBOs[1] = storeDataInAttributeList(1, 3, normals, normals.length);
+		unbindVAO();
+		return new BaseModel(vaoID, VBOs, indices.length);
+	}
+	
+	public static ChunkMesh loadChunkMesh(float[] positions, int posCnt, int[] indices, int indCnt, float[] textureCoords, int textCnt, float[] normals, int normCnt, int[] lightLevels, int lightCnt) throws Exception {
 		if(posCnt % 3 != 0) throw new LoaderException("Invalid vertex count");
 		if(indCnt % 3 != 0) throw new LoaderException("Invalid indices count");
 		if(textCnt % 2 != 0) throw new LoaderException("Invalid texture coordinate count");
@@ -83,15 +98,15 @@ public class Loader {
 		return new ChunkMesh(new BaseModel(vaoID, VBOs, indCnt), false);
 	}
 	
-	public BaseModel loadToVAO(float[] positions) throws Exception {
+	public static BaseModel loadToVAO(float[] positions) throws Exception {
 		if(positions.length % 2 != 0) throw new LoaderException("Invalid vertex count");
 		int vaoID = createVAO();
-		int vboID = this.storeDataInAttributeList(0, 2, positions, positions.length);
+		int vboID = storeDataInAttributeList(0, 2, positions, positions.length);
 		unbindVAO();
 		return new BaseModel(vaoID, new int[] {vboID}, positions.length / 2);
 	}
 	
-	public void updateToVbo(int vbo, float[] data, FloatBuffer buffer) throws Exception {
+	public static void updateToVbo(int vbo, float[] data, FloatBuffer buffer) throws Exception {
 		buffer.clear();
 		buffer.put(data);
 		buffer.flip();
@@ -101,16 +116,16 @@ public class Loader {
 		unbindVBO(GL15.GL_ARRAY_BUFFER);
 	}
 	
-	public int loadToVAO(float[] positions, float[] textureCoords) throws Exception {
+	public static int loadToVAO(float[] positions, float[] textureCoords) throws Exception {
 		if(positions.length % 2 != 0) throw new LoaderException("Invalid vertex count");
 		int vaoID = createVAO();
-		this.storeDataInAttributeList(0, 2, positions, positions.length);
-		this.storeDataInAttributeList(1, 2, textureCoords, textureCoords.length);
+		storeDataInAttributeList(0, 2, positions, positions.length);
+		storeDataInAttributeList(1, 2, textureCoords, textureCoords.length);
 		unbindVAO();
 		return vaoID;
 	}
 	
-	public int loadTextureFromBufferedImage(BufferedImage bi) throws Exception {
+	public static int loadTextureFromBufferedImage(BufferedImage bi) throws Exception {
 		int textureID;
 		int width = bi.getWidth();
 		int height = bi.getHeight();
@@ -158,7 +173,7 @@ public class Loader {
 		return textureID;
 	}
 	
-	public int loadTextureFromFile(String fileName) throws Exception {
+	public static int loadTextureFromFile(String fileName) throws Exception {
 		int textureID;
 		BufferedImage bi;
 		bi = ImageIO.read(new File(fileName));
@@ -208,7 +223,7 @@ public class Loader {
 		return textureID;
 	}
 	
-	public void addInstancedAttribute(int vao, int vbo, int attribute, int dataSize, int instancedDataLength, int offset){
+	public static void addInstancedAttribute(int vao, int vbo, int attribute, int dataSize, int instancedDataLength, int offset){
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
 		GL30.glBindVertexArray(vao);
 		GL20.glVertexAttribPointer(attribute, dataSize, GL11.GL_FLOAT, false, instancedDataLength * 4, offset * 4);
@@ -217,28 +232,28 @@ public class Loader {
 		GL30.glBindVertexArray(0);
 	}
 	
-	private int createVAO() throws Exception {
+	private static int createVAO() throws Exception {
 		int vaoID = GL30.glGenVertexArrays();
 		vaos.add(vaoID);
 		GL30.glBindVertexArray(vaoID);
 		return vaoID;
 	}
 	
-	private int createVBO(int type) throws Exception {
+	private static int createVBO(int type) throws Exception {
 		int vboID = GL15.glGenBuffers();
 		vbos.add(vboID);
 		GL15.glBindBuffer(type, vboID);
 		return vboID;
 	}
 	
-	public int createVBO_S(int floatCount) throws Exception {
+	public static int createVBO_S(int floatCount) throws Exception {
 		int vboID = createVBO(GL15.GL_ARRAY_BUFFER);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, floatCount * 4, GL15.GL_STREAM_DRAW);
 		unbindVBO(GL15.GL_ARRAY_BUFFER);
 		return vboID;
 	}
 	
-	private int storeDataInAttributeList(int attributeNumber, int coordinateSize, float[] data, int len) throws Exception {
+	private static int storeDataInAttributeList(int attributeNumber, int coordinateSize, float[] data, int len) throws Exception {
 		int vboID = createVBO(GL15.GL_ARRAY_BUFFER);
 		FloatBuffer buffer = AdvancedBufferUtils.storeDataInBuffer(data, len);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
@@ -247,21 +262,30 @@ public class Loader {
 		return vboID;
 	}
 	
-	private void unbindVAO() throws Exception {
+	private static int storeDataInAttributeList(int attributeNumber, int coordinateSize, int[] data, int len) throws Exception {
+		int vboID = createVBO(GL15.GL_ARRAY_BUFFER);
+		IntBuffer buffer = AdvancedBufferUtils.storeDataInBuffer(data, len);
+		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL20.glVertexAttribPointer(attributeNumber, coordinateSize, GL11.GL_FLOAT, false, 0, 0);
+		unbindVBO(GL15.GL_ARRAY_BUFFER);
+		return vboID;
+	}
+	
+	private static void unbindVAO() throws Exception {
 		GL30.glBindVertexArray(0);
 	}
 	
-	private void unbindVBO(int type) throws Exception {
+	private static void unbindVBO(int type) throws Exception {
 		GL15.glBindBuffer(type, 0);
 	}
 	
-	private void bindIndices(int[] indices, int len) throws Exception {
+	private static void bindIndices(int[] indices, int len) throws Exception {
 		createVBO(GL15.GL_ELEMENT_ARRAY_BUFFER);
 		IntBuffer buffer = AdvancedBufferUtils.storeDataInBuffer(indices, len);
 		GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
 	}
 	
-	public void cleanUp() throws Exception {
+	public static void cleanUp() throws Exception {
 		for(Integer i:vaos){
 			GL30.glDeleteVertexArrays(i);
 		}

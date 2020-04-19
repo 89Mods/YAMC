@@ -14,13 +14,11 @@ import theGhastModding.meshingTest.text.TextMeshData;
 
 public class TextMasterRenderer {
 	
-	private Loader loader;
 	private Map<FontType, List<GUIText>> texts = new HashMap<FontType, List<GUIText>>();
 	private TextRenderer renderer;
 	
-	public TextMasterRenderer(Loader loader) throws Exception {
+	public TextMasterRenderer() throws Exception {
 		renderer = new TextRenderer();
-		this.loader = loader;
 	}
 	
 	public void render(){
@@ -30,7 +28,7 @@ public class TextMasterRenderer {
 	public void loadText(GUIText text) throws Exception {
 		FontType font = text.getFont();
 		TextMeshData data = font.loadText(text);
-		int vao = loader.loadToVAO(data.getVertexPositions(), data.getTextureCoords());
+		int vao = Loader.loadToVAO(data.getVertexPositions(), data.getTextureCoords());
 		text.setMeshInfo(vao, data.getVertexCount());
 		List<GUIText> textBatch = texts.get(font);
 		if(textBatch == null){

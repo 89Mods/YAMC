@@ -19,16 +19,14 @@ import theGhastModding.meshingTest.world.blocks.Block;
 public class WorldMesher implements Runnable {
 	
 	private World world;
-	private Loader loader;
 	private Thread thread;
 	public Exception e = null;
 	
-	public WorldMesher(World world, Loader loader, BlockTexturemap texturemap) {
+	public WorldMesher(World world, BlockTexturemap texturemap) {
 		this.world = world;
-		this.loader = loader;
 		this.allMeshes = new HashMap<Vector3i, ChunkMesh>();
 		meshers = new ChunkMesher[512];
-		for(int i = 0; i < meshers.length; i++) meshers[i] = new ChunkMesher(loader, texturemap, world);
+		for(int i = 0; i < meshers.length; i++) meshers[i] = new ChunkMesher(texturemap, world);
 		/*for(int i = 0; i < world.getChunkWidth(); i++) {
 			for(int j = 0; j < world.getChunkHeight(); j++) {
 				for(int k = 0; k < world.getChunkDepth(); k++) {
@@ -51,10 +49,10 @@ public class WorldMesher implements Runnable {
 	};
 	
 	private static final float[] leftNormals = {
-			0,-0.5f,-1,
-			0,-0.5f,-1,
-			0,-0.5f,-1,
-			0,-0.5f,-1,
+			0,0f,-1,
+			0,0f,-1,
+			0,0f,-1,
+			0,0f,-1,
 	};
 	
 	private static final float[] leftTextureCoords = {
@@ -77,10 +75,10 @@ public class WorldMesher implements Runnable {
 	};
 	
 	private static final float[] rightNormals = {
-			0,-0.5f,1,
-			0,-0.5f,1,
-			0,-0.5f,1,
-			0,-0.5f,1,
+			0,0f,1,
+			0,0f,1,
+			0,0f,1,
+			0,0f,1,
 	};
 	
 	private static final float[] rightTextureCoords = {
@@ -103,10 +101,10 @@ public class WorldMesher implements Runnable {
 	};
 	
 	private static final float[] frontNormals = {
-			1,-0.5f,0,
-			1,-0.5f,0,
-			1,-0.5f,0,
-			1,-0.5f,0,
+			1,0f,0,
+			1,0f,0,
+			1,0f,0,
+			1,0f,0,
 	};
 	
 	private static final float[] frontTextureCoords = {
@@ -129,10 +127,10 @@ public class WorldMesher implements Runnable {
 	};
 	
 	private static final float[] backNormals = {
-			-1,-0.5f,0,
-			-1,-0.5f,0,
-			-1,-0.5f,0,
-			-1,-0.5f,0,
+			-1,0f,0,
+			-1,0f,0,
+			-1,0f,0,
+			-1,0f,0,
 	};
 	
 	private static final float[] backTextureCoords = {
@@ -155,10 +153,10 @@ public class WorldMesher implements Runnable {
 	};
 	
 	private static final float[] topNormals = {
-			0,0.5f,0,
-			0,0.5f,0,
-			0,0.5f,0,
-			0,0.5f,0,
+			0,1f,0,
+			0,1f,0,
+			0,1f,0,
+			0,1f,0,
 	};
 	
 	private static final float[] topTextureCoords = {
@@ -181,10 +179,10 @@ public class WorldMesher implements Runnable {
 	};
 	
 	private static final float[] bottomNormals = {
-			0,-1.5f,0,
-			0,-1.5f,0,
-			0,-1.5f,0,
-			0,-1.5f,0,
+			0,-1f,0,
+			0,-1f,0,
+			0,-1f,0,
+			0,-1f,0,
 	};
 	
 	private static final float[] bottomTextureCoords = {
@@ -200,7 +198,7 @@ public class WorldMesher implements Runnable {
 		int[] indices = new int[36];
 		float[] textureCoords = new float[48];
 		float[] normals = new float[72];
-		float[] lightLevels = new float[72];
+		int[] lightLevels = new int[72];
 		
 		int[] actualface = new int[] {2,3,1,0,4,5};
 		for(int f = 0; f < 6; f++) {
@@ -217,10 +215,10 @@ public class WorldMesher implements Runnable {
 				textureCoords[f * faceTextureCoords[0].length + j] = offsetCoord;
 			}
 			for(int j = 0; j < faceNormals[0].length; j++) normals[f * faceNormals[0].length + j] = faceNormals[i][j];
-			for(int j = 0; j < faceVertices[0].length; j++) lightLevels[f * faceVertices[0].length + j] = 1.0f;
+			for(int j = 0; j < faceVertices[0].length; j++) lightLevels[f * faceVertices[0].length + j] = 0b11111111;
 		}
 		
-		return loader.loadChunkMesh(vertices, vertices.length, indices, indices.length, textureCoords, textureCoords.length, normals, normals.length, lightLevels, lightLevels.length).getModel();
+		return Loader.loadChunkMesh(vertices, vertices.length, indices, indices.length, textureCoords, textureCoords.length, normals, normals.length, lightLevels, lightLevels.length).getModel();
 	}
 	
 	private static final float[][] faceVertices;
@@ -271,7 +269,7 @@ public class WorldMesher implements Runnable {
 	
 	private Map<Vector3i, ChunkMesh> allMeshes;
 	
-	private ThreadPoolExecutor pool = (ThreadPoolExecutor)Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors() - 1, 2));
+	private ThreadPoolExecutor pool = (ThreadPoolExecutor)Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 2));
 	private ChunkMesher[] meshers;
 	private List<Future<?>> futures = new ArrayList<Future<?>>();
 	
@@ -286,7 +284,7 @@ public class WorldMesher implements Runnable {
 	}
 	
 	private synchronized void deleteMesh(Vector3i vi) {
-		loader.deleteMesh(allMeshes.remove(vi));
+		Loader.deleteMesh(allMeshes.remove(vi));
 	}
 	
 	private synchronized void prepareKeySet() {
@@ -405,7 +403,7 @@ public class WorldMesher implements Runnable {
 			if(meshers[i].ex != null) throw meshers[i].ex;
 			meshers[i].hasGotten = true;
 			ChunkMesh oldMesh = allMeshes.put(new Vector3i(meshers[i].chunkx, meshers[i].chunky, meshers[i].chunkz), meshers[i].getMesh());
-			if(oldMesh != null) loader.deleteMesh(oldMesh);
+			if(oldMesh != null) Loader.deleteMesh(oldMesh);
 			faceCount += meshers[i].faceCount;
 			blockCount += meshers[i].blockCount;
 		}
@@ -417,7 +415,6 @@ public class WorldMesher implements Runnable {
 	private static class ChunkMesher implements Runnable {
 		
 		private int chunkx,chunky,chunkz;
-		private Loader loader;
 		private BlockTexturemap texturemap;
 		private World world;
 		private Exception ex;
@@ -436,14 +433,13 @@ public class WorldMesher implements Runnable {
 		private float[] textureCoords = new float[Chunk.CHUNK_WIDTH * Chunk.CHUNK_HEIGHT * Chunk.CHUNK_DEPTH * 6 * topTextureCoords.length];
 		private int textureCoordsIndx = 0;
 		private int textureCoordsLength;
-		private float[] lightLevels = new float[Chunk.CHUNK_WIDTH * Chunk.CHUNK_HEIGHT * Chunk.CHUNK_DEPTH * 6 * 4];
+		private int[] lightLevels = new int[Chunk.CHUNK_WIDTH * Chunk.CHUNK_HEIGHT * Chunk.CHUNK_DEPTH * 6 * 4];
 		private int lightLevelsIndx = 0;
 		private int lightLevelsLength;
 		
 		private int faceCount,blockCount;
 		
-		public ChunkMesher(Loader loader, BlockTexturemap texturemap, World world) {
-			this.loader = loader;
+		public ChunkMesher(BlockTexturemap texturemap, World world) {
 			this.texturemap = texturemap;
 			this.world = world;;
 		}
@@ -470,7 +466,7 @@ public class WorldMesher implements Runnable {
 			if(verticesLength == 0) {
 				return new ChunkMesh(null, true);
 			}
-			return loader.loadChunkMesh(vertices, verticesLength, indices, indicesLength, textureCoords, textureCoordsLength, normals, normalsLength, lightLevels, lightLevelsLength);
+			return Loader.loadChunkMesh(vertices, verticesLength, indices, indicesLength, textureCoords, textureCoordsLength, normals, normalsLength, lightLevels, lightLevelsLength);
 		}
 		
 		private void meshChunk() throws Exception {
@@ -538,12 +534,7 @@ public class WorldMesher implements Runnable {
 				indicesIndx++;
 			}
 			for(int i = 0; i < faceNormals[face].length; i++) {
-				int offset = 0;
-				if(i % 3 == 0) offset = x;
-				if(i % 3 == 1) offset = y;
-				if(i % 3 == 2) offset = z;
-				float offsetCoord = faceNormals[face][i] + (float)offset;
-				normals[normalsIndx] = offsetCoord;
+				normals[normalsIndx] = faceNormals[face][i];
 				normalsIndx++;
 			}
 			//1280 by 720
@@ -558,7 +549,7 @@ public class WorldMesher implements Runnable {
 				textureCoords[textureCoordsIndx] = offsetCoord;
 				textureCoordsIndx++;
 			}
-			float lightLevel = getLightLevelForFace(x, y, z, face);
+			int lightLevel = getLightLevelForFace(x, y, z, face);
 			lightLevels[lightLevelsIndx] = lightLevel;
 			lightLevelsIndx++;
 			lightLevels[lightLevelsIndx] = lightLevel;
@@ -570,7 +561,7 @@ public class WorldMesher implements Runnable {
 			faceCount++;
 		}
 		
-		private float getLightLevelForFace(int x, int y, int z, int face) {
+		private int getLightLevelForFace(int x, int y, int z, int face) {
 			/*int blockid = world.getBlock(x, y, z);
 			if(!Block.allBlocks[blockid].isOpaque()) {
 				return (float)world.getLightLevel(x, y, z) / 15.0f;
@@ -581,26 +572,40 @@ public class WorldMesher implements Runnable {
 					lightLevel = 0;
 					break;
 				case Block.BLOCK_FACE_FRONT:
-					lightLevel = world.getLightLevel(x + 1, y, z) - 1;
+					lightLevel = world.getCompoundLightLevel(x + 1, y, z);
 					break;
 				case Block.BLOCK_FACE_BACK:
-					lightLevel = world.getLightLevel(x - 1, y, z) - 1;
+					lightLevel = world.getCompoundLightLevel(x - 1, y, z);
 					break;
 				case Block.BLOCK_FACE_RIGHT:
-					lightLevel = world.getLightLevel(x, y, z + 1) - 1;
+					lightLevel = world.getCompoundLightLevel(x, y, z + 1);
 					break;
 				case Block.BLOCK_FACE_LEFT:
-					lightLevel = world.getLightLevel(x, y, z - 1) - 1;
+					lightLevel = world.getCompoundLightLevel(x, y, z - 1);
 					break;
 				case Block.BLOCK_FACE_TOP:
-					lightLevel = world.getLightLevel(x, y + 1, z);
+					lightLevel = world.getCompoundLightLevel(x, y + 1, z);
 					break;
 				case Block.BLOCK_FACE_BOTTOM:
-					lightLevel = world.getLightLevel(x, y - 1, z) - 2;
+					lightLevel = world.getCompoundLightLevel(x, y - 1, z);
 					break;
 			}
-			if(lightLevel < 0) lightLevel = 0;
-			return (float)lightLevel / 15.0f;
+			if(face != Block.BLOCK_FACE_TOP && face != Block.BLOCK_FACE_BOTTOM) {
+				if((lightLevel & 0b1111) > 2) {
+					lightLevel -= 3;
+				}else lightLevel &= ~0b1111;
+				if(((lightLevel >> 4) & 0b1111) > 2) {
+					lightLevel -= 0b110000;
+				}else lightLevel &= ~0b11110000;
+			}else if(face == Block.BLOCK_FACE_BOTTOM) {
+				if((lightLevel & 0b1111) > 3) {
+					lightLevel -= 4;
+				}else lightLevel &= ~0b1111;
+				if(((lightLevel >> 4) & 0b1111) > 3) {
+					lightLevel -= 0b1000000;
+				}else lightLevel &= ~0b11110000;
+			}
+			return lightLevel;
 		}
 		
 	}

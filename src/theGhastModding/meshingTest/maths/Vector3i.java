@@ -38,7 +38,7 @@ public class Vector3i {
 	}
 	
 	public int hashCode() {
-		return x * 1073741824 + y * 536870912 + z;
+		return x * 1073741824 + y * 536870912 + z * 31;
 	}
 	
 }

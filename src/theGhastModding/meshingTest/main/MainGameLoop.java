@@ -7,6 +7,8 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -22,11 +24,12 @@ import org.lwjgl.opengl.GL11;
 import theGhastModding.meshingTest.gui.GuiRenderer;
 import theGhastModding.meshingTest.gui.GuiTexture;
 import theGhastModding.meshingTest.object.Camera;
-import theGhastModding.meshingTest.renderer.BlocksRenderer;
+import theGhastModding.meshingTest.renderer.MasterRenderer;
 import theGhastModding.meshingTest.renderer.TextMasterRenderer;
 import theGhastModding.meshingTest.resources.BasicFonts;
 import theGhastModding.meshingTest.resources.Loader;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
+import theGhastModding.meshingTest.sky.celestials.CelestialBody;
 import theGhastModding.meshingTest.sound.SoundEngine;
 import theGhastModding.meshingTest.text.GUIText;
 import theGhastModding.meshingTest.util.FileChannelOutputStream;
@@ -34,7 +37,6 @@ import theGhastModding.meshingTest.world.Chunk;
 import theGhastModding.meshingTest.world.World;
 import theGhastModding.meshingTest.world.WorldMesher;
 import theGhastModding.meshingTest.world.gen.WorldGeneratorDefault;
-import theGhastModding.meshingTest.world.gen.WorldGeneratorMaze;
 
 public class MainGameLoop {
 	
@@ -71,11 +73,10 @@ public class MainGameLoop {
 	}
 	
 	public void start(){
-		Loader loader = null;
 		World world = null;
 		Thread worldThread = null;
 		WorldMesher mesher = null;
-		BlocksRenderer renderer = null;
+		MasterRenderer renderer = null;
 		TextMasterRenderer textRenderer = null;
 		GuiRenderer guiRenderer = null;
 		BasicFonts basicFonts = null;
@@ -83,27 +84,33 @@ public class MainGameLoop {
 		SoundEngine sound = null;
 		Random rng = new Random();
 		GuiTexture loadingScreen = null;
+		CelestialBody moon = null;
+		//CelestialBody aireos = null;
+		List<CelestialBody> celestials = new ArrayList<CelestialBody>();
 		try {
-			loader = new Loader();
-			world = new World(256, 256, 256);
+			world = new World(640, 128, 640);
 			worldThread = new Thread(world);
-			renderer = new BlocksRenderer(window);
-			textRenderer = new TextMasterRenderer(loader);
-			guiRenderer = new GuiRenderer(loader);
-			basicFonts = new BasicFonts(loader, window);
+			renderer = new MasterRenderer(window);
+			textRenderer = new TextMasterRenderer();
+			guiRenderer = new GuiRenderer();
+			basicFonts = new BasicFonts(window);
 			sound = new SoundEngine();
 			sound.registerSource(new File("res/buzz_mono.wav"), "buzz");
 			
 			try {
-				texturemap = new BlockTexturemap("res/map_placeholder.png", loader, 256, 256, 32);
-				loadingScreen = new GuiTexture(loader.loadTextureFromFile("res/GUI/menubg_mc.png"), new Vector2f(0, 0), new Vector2f(1f, 1f));
+				texturemap = new BlockTexturemap("res/map_placeholder.png", 256, 256, 32);
+				loadingScreen = new GuiTexture(Loader.loadTextureFromFile("res/GUI/menubg_placeholder.png"), new Vector2f(0, 0), new Vector2f(1f, 1f));
+				moon = CelestialBody.loadPlanet(1738.1f, new Vector3f(0f,36260.0f,0f), new Vector3f(440f,0f,0f), "res/celestials/moon/colors.png", "res/celestials/moon/height.png", 7.5f);
+				celestials.add(moon);
+				//aireos = CelestialBody.loadPlanet(60268, new Vector3f(168055.5f,69610.8f,0f), new Vector3f(90f,0f,0f), "res/celestials/aireos/colors.png", "res/celestials/aireos/height.png", 1f);
+				//celestials.add(aireos);
 			} catch(Exception e) {
 				JOptionPane.showMessageDialog(null, "Error loading textures: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				e.printStackTrace();
 				System.exit(1);
 			}
 			
-			mesher = new WorldMesher(world, loader, texturemap);
+			mesher = new WorldMesher(world, texturemap);
 		}catch(Exception e){
 			JOptionPane.showMessageDialog(null, "Error creating rendering system: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
@@ -138,11 +145,19 @@ public class MainGameLoop {
 			
 			world.loadWorldData();
 			world.setWorldGen(new WorldGeneratorDefault(world));
+			//world.setWorldGen(new WorldGeneratorHypermaze(world));
+			//((WorldGeneratorHypermaze)world.getWorldGen()).roomcnt = 0;
+			//world.setWorldGen(new WorldGeneratorBackrooms(world));
+			//world.setWorldGen(new WorldGeneratorMandel(world));
 			//world.setWorldGen(new WorldGeneratorMaze(world));
-			//((WorldGeneratorMaze)world.getWorldGen()).roomcnt = 0;
+			//((WorldGeneratorMaze)world.getWorldGen()).roomcnt = 8192;
 			boolean newWorld = camera.getPosition().x == -1;
 			world.startGenerateSpawnChunks(newWorld ? world.getChunkWidth() / 2 : (int)camera.getPosition().x / Chunk.CHUNK_WIDTH, newWorld ? world.getChunkHeight() / 2 : (int)camera.getPosition().z / Chunk.CHUNK_DEPTH);
 			worldThread.start();
+			
+			boolean kHeld = false;
+			
+			double moonOrbitPosition = 0;
 			
 			Dimension d = getWindowSize(window);
 			System.out.println(d.toString());
@@ -151,6 +166,7 @@ public class MainGameLoop {
 			double frameTime = 1000000000D / 60D;
 			long frameTimer = System.nanoTime();
 			int counter2 = 0;
+			Vector3f prevCpos = new Vector3f();
 			while(!GLFW.glfwWindowShouldClose(window)){
 				if(System.nanoTime() - frameTimer >= frameTime){
 					delta = (System.nanoTime() - frameTimer) / 1000;
@@ -206,7 +222,18 @@ public class MainGameLoop {
 						screenshot();
 					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_K) == GL11.GL_TRUE){
-						world.setSunlight(rng.nextInt(16));
+						if(!kHeld) {
+							kHeld = true;
+							world.setSunlightStrength(rng.nextFloat() * 15.0f);
+						}
+					}else {
+						kHeld = false;
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_7) == GL11.GL_TRUE) {
+						world.increaseTime(25L);
+					}
+					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_6) == GL11.GL_TRUE) {
+						world.increaseTime(-25L);
 					}
 					if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_P) == GL11.GL_TRUE){
 						GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
@@ -217,11 +244,27 @@ public class MainGameLoop {
 						GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 					}
 					
+					moonOrbitPosition = (360.0D - ((world.getWorldTime() % 144000L) / 144000.0D * 360.0D) + (360.0D - world.getTimeOfDay() / 24000.0D * 360.0D));
+					moonOrbitPosition %= 360.0;
+					moon.getPos().x = (float)Math.sin(Math.toRadians(moonOrbitPosition)) * 36260.0f;
+					moon.getPos().y = (float)Math.cos(Math.toRadians(moonOrbitPosition)) * 36260.0f;
+					moon.getRot().y = -(float)moonOrbitPosition / 360.0f * 180.0f;
+					
 					camera.update();
 					sound.update(camera);
 					mesher.updateRendererMeshes();
 					GLFW.glfwPollEvents();
-					renderer.render(camera, mesher, texturemap);
+					prevCpos.x = camera.getPosition().x;
+					prevCpos.y = camera.getPosition().y;
+					prevCpos.z = camera.getPosition().z;
+					//camera.strave(-0.2f, 0);
+					//renderer.render(camera, mesher, texturemap, 1);
+					
+					//camera.strave(0.4f, 0);
+					renderer.render(camera, mesher, texturemap, 0, world, celestials);
+					
+					camera.setPosition(prevCpos.x, prevCpos.y, prevCpos.z);
+					GL11.glColorMask(true, true, true, true);
 					
 					guiRenderer.render();
 					textRenderer.render();
@@ -270,7 +313,7 @@ public class MainGameLoop {
 			GLFW.glfwPollEvents();
 			world.saveWorld();
 			GLFW.glfwPollEvents();
-			loader.cleanUp();
+			Loader.cleanUp();
 			renderer.cleanUp();
 			textRenderer.cleanUp();
 			sound.cleanUp();

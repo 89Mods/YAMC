@@ -267,6 +267,12 @@ public class Camera {
 		this.position.z += dz;
 	}
 	
+	public void strave(float dx, float dz) {
+		float dsx = (float)(dx * Math.sin(Math.toRadians(-getYaw() + 90.0)));
+		float dsz = (float)(dz * Math.cos(Math.toRadians(-getYaw() + 90.0)));
+		move(dsx, 0, dsz);
+	}
+	
 	private boolean released = true;
 	private final int maxblock = 21;
 	

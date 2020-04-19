@@ -1,0 +1,122 @@
+#version 330 core
+#define PI 3.1415926535897932384626433832795
+
+in vec3 toSunVector;
+in vec3 fromCameraVector;
+in vec3 planetWorldPosition;
+in vec3 originPos;
+
+out vec4 out_Color;
+
+uniform float planetRadius;
+uniform float atmoRadius;
+uniform float actualPlanetRadius;
+uniform float Hr;
+uniform float Hm;
+uniform vec3 betaR;
+uniform vec3 betaM;
+uniform float mieG;
+uniform vec3 sunPosition;
+
+const int numSamples = 16;
+const int numSamplesLight = 8;
+
+vec3 computeIncidentLight();
+vec2 raySphereIntersection(vec3 pos, vec3 orig, vec3 dir, float radius);
+
+void main(void) {
+	vec3 atmoColor = computeIncidentLight();
+	if(atmoColor.r > 1e40) {
+		out_Color = vec4(0,0,0,1.0);
+	}
+	out_Color = vec4(atmoColor, 1.0);
+}
+
+vec3 computeIncidentLight() {
+	float tmin = 0;
+	float tmax = 1e50;
+	//return vec3(fromCameraVector.x, fromCameraVector.y, fromCameraVector.z); //This looks kinda beautiful!
+	
+	vec2 a = raySphereIntersection(planetWorldPosition, originPos, fromCameraVector, actualPlanetRadius);
+	if(a.x < 1e44 && a.y > 0) {
+		tmax = max(0, a.x);
+	}
+	
+	a = raySphereIntersection(planetWorldPosition, originPos, fromCameraVector, actualPlanetRadius / planetRadius * atmoRadius);
+	if(a.x > 1e40) return vec3(1e50, 1e50, 1e50);
+	if(a.x > tmin && a.x > 0) tmin = a.x;
+	if(a.y < tmax) tmax = a.y;
+	
+	float segmentLength = (tmax - tmin) / numSamples;
+	float segmentLengthLight;
+	float tCurrent = tmin;
+	float tCurrentLight;
+	vec3 sumR = vec3(0, 0, 0);
+	vec3 sumM = vec3(0, 0, 0);
+	float opticalDepthR = 0, opticalDepthM = 0;
+	float opticalDepthLightR, opticalDepthLightM;
+	
+	float mu = dot(toSunVector, fromCameraVector);
+	float phaseR = 3.0 / (16.0 * PI) * (1.0 + mu * mu);
+	float phaseM = 3.0 / (8.0 * PI) * ((1.0 - mieG * mieG) * (1.0 + mu * mu)) / ((2.0 + mieG * mieG) * pow(1.0 + mieG * mieG - 2.0 * mieG * mu, 1.5));
+	vec3 pos, posLight, toSun;
+	
+	int j;
+	for(int i = 0; i < numSamples; i++) {
+		pos = (originPos - planetWorldPosition) + (tCurrent + segmentLength * 0.5) * fromCameraVector;
+		
+		float height = length(pos) - actualPlanetRadius;
+		
+		float hr = exp(-height / Hr) * segmentLength;
+		float hm = exp(-height / Hm) * segmentLength;
+		opticalDepthR += hr;
+		opticalDepthM += hm;
+		
+		toSun = normalize(sunPosition - pos);
+		a = raySphereIntersection(vec3(0, 0, 0), pos, toSun, actualPlanetRadius / planetRadius * atmoRadius);
+		if(a.x > 1e40) {
+			tCurrent += segmentLength;
+		}
+		
+		segmentLengthLight = a.y / numSamplesLight, tCurrentLight = 0;
+		opticalDepthLightR = 0, opticalDepthLightM = 0;
+		for(j = 0; j < numSamplesLight; ++j) {
+			posLight = pos + (tCurrentLight + segmentLengthLight * 0.5) * toSun;
+			height = length(posLight) - actualPlanetRadius;
+			if(height < 0){ j = -5; break; }
+			
+			float hrLight = exp(-height / Hr) * segmentLengthLight;
+			float hmLight = exp(-height / Hm) * segmentLengthLight;
+			opticalDepthLightR += hrLight;
+			opticalDepthLightM += hmLight;
+			
+			tCurrentLight += segmentLengthLight;
+		}
+		if(j != -5) {
+			vec3 tau = betaR * (opticalDepthR + opticalDepthLightR) + betaM * 1.1 * (opticalDepthM + opticalDepthLightM);
+			vec3 attenuation = vec3(exp(-tau.x), exp(-tau.y), exp(-tau.z));
+			sumR += attenuation * hr;
+			sumM += attenuation * hm;
+		}
+		tCurrent += segmentLength;
+	}
+	
+	return (sumR * betaR * phaseR + sumM * betaM * phaseM) * 17.0;
+}
+
+vec2 raySphereIntersection(vec3 pos, vec3 orig, vec3 dir, float radius) {
+	vec3 L = pos - orig;
+	
+	float tca = dot(dir, L);
+	
+	float L_2 = L.x * L.x + L.y * L.y + L.z * L.z;
+	if(tca <= 0 && sqrt(L_2) > radius) return vec2(1e50, 1e50);
+	
+	float d = L_2 - tca * tca;
+	if(sqrt(d) >= radius) return vec2(1e50, 1e50);
+	
+	float thc = radius * radius - d;
+	thc = sqrt(thc);
+	
+	return vec2(tca - thc, tca + thc);
+}

@@ -28,4 +28,5 @@ void main(void) {
 	toSunVector = normalize(sunPosition - worldPosition.xyz);
 	//fromCameraVector = -normalize(((inverse(viewMatrix) * vec4(0.0,0.0,0.0,1.0)).xyz - worldPosition.xyz));
 	fromCameraVector = normalize(worldPosition.xyz - originPos);
+	if(fromCameraVector.y < 0) fromCameraVector.y = 0;
 }

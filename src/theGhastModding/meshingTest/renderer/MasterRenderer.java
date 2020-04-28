@@ -14,6 +14,11 @@ import theGhastModding.meshingTest.maths.Maths;
 import theGhastModding.meshingTest.object.Camera;
 import theGhastModding.meshingTest.resources.BaseModel;
 import theGhastModding.meshingTest.resources.textures.BlockTexturemap;
+import theGhastModding.meshingTest.shaders.post.FramebufferUtils;
+import theGhastModding.meshingTest.shaders.post.PostprocessingQueue;
+import theGhastModding.meshingTest.shaders.post.Postprocessor8bit;
+import theGhastModding.meshingTest.shaders.post.PostprocessorBloom;
+import theGhastModding.meshingTest.shaders.post.PostprocessorNone;
 import theGhastModding.meshingTest.sky.Atmosphere;
 import theGhastModding.meshingTest.sky.AtmosphereShader;
 import theGhastModding.meshingTest.sky.celestials.CelestialBody;
@@ -30,15 +35,21 @@ public class MasterRenderer {
 	private static final float FAR_PLANE = (float)Math.sqrt(256.0 * 256.0 * 2.0);
 	public static Matrix4f projectionMatrix,skyProjectionMatrix;
 	
-	private static final float CLEAR_RED = 0f;
-	private static final float CLEAR_GREEN = 0f;
-	private static final float CLEAR_BLUE = 0f;
+	public static final float CLEAR_RED = 0f;
+	public static final float CLEAR_GREEN = 0f;
+	public static final float CLEAR_BLUE = 0f;
 	
 	private Atmosphere atmo = Atmosphere.DEFAULT;
 	private BaseModel skydome;
 	
 	private BlocksRenderer blocksRenderer;
 	private CelestialRenderer celestialRenderer;
+	
+	private int fbo_tex;
+	private int fbo,rbo;
+	private int width,height;
+	private PostprocessingQueue post;
+	private PostprocessorBloom bloomEffect;
 	
 	public MasterRenderer(long window) throws Exception {
 		skyShader = new AtmosphereShader();
@@ -48,9 +59,24 @@ public class MasterRenderer {
 		skyShader.start();
 		skyShader.loadProjectionMatrix(skyProjectionMatrix);
 		skyShader.stop();
-		skydome = Atmosphere.generateSkydome(6420e3f);
+		skydome = Atmosphere.generateSkydome(6420e2f);
 		blocksRenderer = new BlocksRenderer();
 		celestialRenderer = new CelestialRenderer();
+		Dimension d = MainGameLoop.getWindowSize(window);
+		post = new PostprocessingQueue(window); //TODO: Rename class to PostprocessingPipeline
+		bloomEffect = new PostprocessorBloom(d.width, d.height);
+		bloomEffect.setBloomStrength(0.1f);
+		post.addPostprocessor(bloomEffect);
+		post.addPostprocessor(new Postprocessor8bit(d.width, d.height));
+		post.addPostprocessor(new PostprocessorNone(d.width, d.height));
+		
+		fbo_tex = FramebufferUtils.genFramebufferTexture(d.width, d.height);
+		
+		long fborbo = FramebufferUtils.genFramebufferRenderbuffer(d.width, d.height, fbo_tex);
+		fbo = (int)(fborbo & 0xFFFFFFFFL);
+		rbo = (int)((fborbo >>> 32L) & 0xFFFFFFFFL);
+		width = d.width;
+		height = d.height;
 	}
 	
 	public static void enableCulling(){
@@ -63,6 +89,9 @@ public class MasterRenderer {
 	}
 	
 	public void render(Camera camera, WorldMesher mesher, BlockTexturemap texture, int stereoMode, World world, List<CelestialBody> celestials) throws Exception {
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+		GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, rbo);
+		GL11.glViewport(0, 0, width, height);
 		prepare(stereoMode);
 		
 		double x = (world.getTimeOfDay() - 12000) / 24000.0D;
@@ -77,11 +106,12 @@ public class MasterRenderer {
 		celestialRenderer.render(camera, celestials, sunPosition, sunColor);
 		GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
 		
+		//Move model further down to hide uglyness on horizon
 		disableCulling();
 		GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ONE);
 		skyShader.start();
 		skyShader.loadViewMatrix(camera);
-		skyShader.loadTransformationMatrix(Maths.createTransformationMatrix(new Vector3f(camera.getPosition().x, -6360e3f - 100f,camera.getPosition().z), new Vector3f(0f,0f,0f), 1.0f));
+		skyShader.loadTransformationMatrix(Maths.createTransformationMatrix(new Vector3f(camera.getPosition().x, -6360e2f - 10f,camera.getPosition().z), new Vector3f(0f,0f,0f), 1.0f));
 		skyShader.loadPlanetInfo(camera, 6360e3f);
 		skyShader.loadSun(sunPosition, sunColor);
 		skyShader.loadAtmosphere(atmo, 6360e3f);
@@ -91,10 +121,12 @@ public class MasterRenderer {
 		GL11.glDrawElements(GL11.GL_TRIANGLES, skydome.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
 		skyShader.stop();
 		GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
-		GL11.glBlendFunc(GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GL11.glDisable(GL11.GL_BLEND); //TODO: Fix issues that prevent partially transparent blocks from working.
 		
 		blocksRenderer.render(camera, mesher, texture, stereoMode, world, sunColor);
 		GL11.glFinish();
+		post.apply(fbo_tex);
 	}
 	
 	private void prepare(int stereoMode) throws Exception {

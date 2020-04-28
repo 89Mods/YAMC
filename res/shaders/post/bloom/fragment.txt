@@ -1,0 +1,15 @@
+#version 330 core
+
+in vec2 pass_textureCoords;
+
+out vec4 out_Color;
+
+uniform sampler2D textureSampler;
+uniform sampler2D highlightSampler;
+uniform float bloomStrength;
+
+void main(void){
+	vec4 sceneColor = texture(textureSampler, pass_textureCoords);
+	vec4 highlightColor = texture(highlightSampler, pass_textureCoords);
+	out_Color = sceneColor + highlightColor * bloomStrength;
+}

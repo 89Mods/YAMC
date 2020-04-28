@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 public class MeshingTest {
 	
 	public static final String NAME = "TGM's Minecraft Clone";
-	public static final String VERSION = "mcc_05192020";
+	public static final String VERSION = "mcc_05202020";
 	
 	public static void main(String[] args){
 		
@@ -85,6 +85,10 @@ public class MeshingTest {
 			System.out.println("Done.");
 			System.exit(0);
 		}
+		
+		int width = 1280;
+		int height = 720;
+		
 		double spawnx = 32;
 		double spawny = 32;
 		if(args.length > 1) {
@@ -97,14 +101,14 @@ public class MeshingTest {
 			return;
 		}
 		
-		long window = GLFW.glfwCreateWindow(1280, 720, NAME, 0, 0);
+		long window = GLFW.glfwCreateWindow(width, height, NAME, 0, 0);
 		if(window == 0){
 			JOptionPane.showMessageDialog(null, "Error creating window", "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		
 		GLFWVidMode videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-		GLFW.glfwSetWindowPos(window, (videoMode.width() - 1280) / 2, (videoMode.height() - 720) / 2);
+		GLFW.glfwSetWindowPos(window, (videoMode.width() - width) / 2, (videoMode.height() - height) / 2);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4);
 		GLFW.glfwShowWindow(window);
 		

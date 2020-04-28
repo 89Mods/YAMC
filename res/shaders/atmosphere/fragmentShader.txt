@@ -1,5 +1,7 @@
 #version 330 core
 #define PI 3.1415926535897932384626433832795
+#define HUGE 1000000000
+#define LESS_HUGE 900000000
 
 in vec3 toSunVector;
 in vec3 fromCameraVector;
@@ -26,7 +28,7 @@ vec2 raySphereIntersection(vec3 pos, vec3 orig, vec3 dir, float radius);
 
 void main(void) {
 	vec3 atmoColor = computeIncidentLight();
-	if(atmoColor.r > 1e40) {
+	if(atmoColor.r > LESS_HUGE) {
 		out_Color = vec4(0,0,0,1.0);
 	}
 	out_Color = vec4(atmoColor, 1.0);
@@ -34,16 +36,16 @@ void main(void) {
 
 vec3 computeIncidentLight() {
 	float tmin = 0;
-	float tmax = 1e50;
+	float tmax = HUGE;
 	//return vec3(fromCameraVector.x, fromCameraVector.y, fromCameraVector.z); //This looks kinda beautiful!
 	
 	vec2 a = raySphereIntersection(planetWorldPosition, originPos, fromCameraVector, actualPlanetRadius);
-	if(a.x < 1e44 && a.y > 0) {
+	if(a.x < HUGE && a.y > 0) {
 		tmax = max(0, a.x);
 	}
 	
 	a = raySphereIntersection(planetWorldPosition, originPos, fromCameraVector, actualPlanetRadius / planetRadius * atmoRadius);
-	if(a.x > 1e40) return vec3(1e50, 1e50, 1e50);
+	if(a.x > LESS_HUGE) return vec3(HUGE, HUGE, HUGE);
 	if(a.x > tmin && a.x > 0) tmin = a.x;
 	if(a.y < tmax) tmax = a.y;
 	
@@ -74,7 +76,7 @@ vec3 computeIncidentLight() {
 		
 		toSun = normalize(sunPosition - pos);
 		a = raySphereIntersection(vec3(0, 0, 0), pos, toSun, actualPlanetRadius / planetRadius * atmoRadius);
-		if(a.x > 1e40) {
+		if(a.x > LESS_HUGE) {
 			tCurrent += segmentLength;
 		}
 		
@@ -110,10 +112,10 @@ vec2 raySphereIntersection(vec3 pos, vec3 orig, vec3 dir, float radius) {
 	float tca = dot(dir, L);
 	
 	float L_2 = L.x * L.x + L.y * L.y + L.z * L.z;
-	if(tca <= 0 && sqrt(L_2) > radius) return vec2(1e50, 1e50);
+	if(tca <= 0 && sqrt(L_2) > radius) return vec2(HUGE, HUGE);
 	
 	float d = L_2 - tca * tca;
-	if(sqrt(d) >= radius) return vec2(1e50, 1e50);
+	if(sqrt(d) >= radius) return vec2(HUGE, HUGE);
 	
 	float thc = radius * radius - d;
 	thc = sqrt(thc);

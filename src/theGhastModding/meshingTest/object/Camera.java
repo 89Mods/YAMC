@@ -23,14 +23,14 @@ public class Camera {
 	private float roll;
 	private long window;
 	
-	private static final float RUN_SPEED = 0.02f;
+	private static final float RUN_SPEED = 0.015f;
 	private static final float GRAVITY = -0.0001f;
 	private static final float JUMP_POWER = 0.025f;
 	private static final float MOUSE_SENSITIVITY = 0.1f;
-	private static final float STRAVE_SPEED = 0.02f;
+	private static final float STRAVE_SPEED = 0.015f;
 	private static final int REACH_DISTANCE = 6;
 	
-	public boolean DEV_MODE = true;
+	public boolean DEV_MODE = false;
 	
 	private float currentSpeed = 0;
 	private float upwardsSpeed = 0;

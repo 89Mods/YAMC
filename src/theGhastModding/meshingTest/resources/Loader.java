@@ -81,6 +81,17 @@ public class Loader {
 		return new BaseModel(vaoID, VBOs, indices.length);
 	}
 	
+	public static BaseModel loadToVAOT(float[] positions, float[] textureCoords) throws Exception {
+		if(positions.length % 2 != 0) throw new Exception("Invalid vertex count");
+		if(textureCoords.length % 2 != 0) throw new LoaderException("Invalid texture coordinate count");
+		int vaoID = createVAO();
+		int[] VBOs = new int[2];
+		VBOs[0] = storeDataInAttributeList(0, 2, positions, positions.length);
+		VBOs[1] = storeDataInAttributeList(1, 2, textureCoords, textureCoords.length);
+		unbindVAO();
+		return new BaseModel(vaoID, VBOs, positions.length / 2);
+	}
+	
 	public static ChunkMesh loadChunkMesh(float[] positions, int posCnt, int[] indices, int indCnt, float[] textureCoords, int textCnt, float[] normals, int normCnt, int[] lightLevels, int lightCnt) throws Exception {
 		if(posCnt % 3 != 0) throw new LoaderException("Invalid vertex count");
 		if(indCnt % 3 != 0) throw new LoaderException("Invalid indices count");

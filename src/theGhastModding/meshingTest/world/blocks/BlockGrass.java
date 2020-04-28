@@ -30,7 +30,7 @@ public class BlockGrass extends Block {
 			world.setBlock(x, y, z, Block.dirt.getBlockID());
 			return;
 		}
-		if(world.getAbsoluteSunLightLevel(x, y + 1, z) >= 9 || world.getTorchLightLevel(x, y + 1, z) >= 9) {
+		if(world.getLightLevel(x, y + 1, z) >= 9) {
 			int side = rng.nextInt(8);
 			int x2,y2,z2;
 			switch(side) {

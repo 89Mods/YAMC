@@ -1,0 +1,15 @@
+#version 330 core
+
+in vec2 pass_textureCoords;
+
+out vec4 out_Color;
+
+uniform sampler2D textureSampler;
+
+void main(void){
+	vec4 col = texture(textureSampler, pass_textureCoords);
+	col.r = round((col.r * 7.0)) / 7.0;
+	col.g = round((col.g * 7.0)) / 7.0;
+	col.b = round((col.b * 3.0)) / 3.0;
+	out_Color = col;
+}

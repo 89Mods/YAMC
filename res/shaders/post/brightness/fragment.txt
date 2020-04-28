@@ -1,0 +1,13 @@
+#version 330 core
+
+in vec2 pass_textureCoords;
+
+out vec4 out_Color;
+
+uniform sampler2D textureSampler;
+
+void main(void){
+	vec4 color = texture(textureSampler, pass_textureCoords);
+	float brightness = (color.r * 0.2126) + (color.g * 0.7152) + (color.b * 0.0722);
+	out_Color = color * brightness;
+}
